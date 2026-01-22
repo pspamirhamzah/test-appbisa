@@ -483,8 +483,8 @@
                         <div class="kpi-big" id="growth-npk-val">0%</div>
                         <div class="kpi-subtext">vs Tahun Lalu</div>
                         <div class="growth-legend">
-                            <div class="legend-item"><span class="dot bg-npk"></span> <span id="year-curr-npk">2025</span>: <span id="val-npk-curr">0</span></div>
-                            <div class="legend-item"><span class="dot bg-grey"></span> <span id="year-prev-npk">2024</span>: <span id="val-npk-prev">0</span></div>
+                            <div class="legend-item"><span class="dot bg-npk"></span> <span id="year-curr-npk">2025</span>: <span id="val-dist-npk-curr">0</span></div>
+                            <div class="legend-item"><span class="dot bg-grey"></span> <span id="year-prev-dist-npk">2024</span>: <span id="val-dist-npk-prev">0</span></div>
                         </div>
                     </div>
                 </div>
@@ -843,8 +843,14 @@
                 }
             };
 
+            const checkScreenSize = () => {
+                if(window.innerWidth <= 768) { state.sidebarOpen = false; } 
+                else { state.sidebarOpen = true; }
+                renderSidebar();
+            };
+
             // ==========================================
-            // RENDER FUNCTIONS (MOVED UP FOR SCOPE SAFETY)
+            // RENDER FUNCTIONS
             // ==========================================
 
             const renderNasionalChart = (nasStats) => {
@@ -989,6 +995,22 @@
                         labels: ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'],
                         datasets: [
                             {
+                                type: 'line', // Stock Line (Updated)
+                                label: 'Stok Aktual', 
+                                data: data.stock, // Added Stock Data
+                                borderColor: '#10b981', // Green for Stock
+                                borderWidth: 2, 
+                                fill: false, 
+                                tension: 0.4, 
+                                pointRadius: 0, 
+                                order: 0 // On Top
+                            },
+                            {
+                                type: 'line', label: 'Target Sales', data: data.target, 
+                                borderColor: '#666', borderDash: [6, 6], borderWidth: 2, 
+                                fill: false, tension: 0.4, pointRadius: 0, pointStyle: createDashedCircle('#999'), order: 1
+                            },
+                            {
                                 label: 'Truk (Inbag)', data: data.land, backgroundColor: colorTruck, stack: 'stack1', order: 2
                             },
                             {
@@ -1005,7 +1027,7 @@
                         },
                         scales: { 
                             x: { grid: { display: false }, stacked: true }, 
-                            y: { grid: { color: state.theme==='dark'?'#333':'#e5e7eb' }, beginAtZero: true, stacked: true, ticks: { maxTicksLimit: 5, callback: (v) => v===0?null:(v>=1000?(v/1000)+' rb':v) } } 
+                            y: { grid: { color: state.theme==='dark'?'#333':'#e5e7eb' }, beginAtZero: true, stacked: false, ticks: { maxTicksLimit: 5, callback: (v) => v===0?null:(v>=1000?(v/1000)+' rb':v) } } 
                         }
                     }
                 });
@@ -1027,6 +1049,7 @@
 
                 let mLand = Array(12).fill(0);
                 let mSea = Array(12).fill(0);
+                let mTarget = Array(12).fill(0);
 
                 // Calculate for specific province
                 state.rawData.forEach(r => {
@@ -1045,6 +1068,10 @@
                              if (r.KATEGORI && (r.KATEGORI.includes('TRUCK') || r.KATEGORI.includes('DARAT'))) mLand[r.BULAN] += r.TONASE;
                              else if (r.KATEGORI && (r.KATEGORI.includes('KAPAL') || r.KATEGORI.includes('LAUT'))) mSea[r.BULAN] += r.TONASE;
                         }
+                        // Target comes from Sales RKO
+                        else if (r.JENIS === 'ALOKASI' || r.JENIS === 'RKO') {
+                             mTarget[r.BULAN] += r.TONASE;
+                        }
                     }
                 });
 
@@ -1052,12 +1079,16 @@
                 const isUrea = state.activeProduct === 'UREA';
                 const colorTruck = isUrea ? '#f59e0b' : '#0ea5e9'; 
                 const colorKapal = isUrea ? '#fcd34d' : '#7dd3fc';
+                const targetIcon = createDashedCircle('#999');
 
                 charts.provinsiDist = new Chart(ctx, {
                     type: 'bar',
                     data: {
                         labels: ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'],
                         datasets: [
+                            {
+                                type: 'line', label: 'Target Sales', data: mTarget, borderColor: '#666', borderDash: [6, 6], borderWidth: 2, fill: false, tension: 0.4, pointRadius: 0, pointStyle: targetIcon, order: 1
+                            },
                             {
                                 label: 'Truk (Inbag)', data: mLand, backgroundColor: colorTruck, stack: 'stack1', order: 2
                             },
@@ -1079,6 +1110,10 @@
             };
 
             const renderSalesRankings = (provData) => {
+                const listBest = document.getElementById('list-top5');
+                const listWarn = document.getElementById('list-others');
+                if (!listBest || !listWarn) return;
+
                 let arr = Object.keys(provData).map(key => {
                     const item = provData[key];
                     let sortVal = 0, displayVal = '';
@@ -1094,9 +1129,6 @@
 
                 let activeData = arr.filter(item => item.rawReal > 0);
                 activeData.sort((a,b) => b.val - a.val);
-
-                const listBest = document.getElementById('list-top5');
-                const listWarn = document.getElementById('list-others');
                 
                 if(listBest) {
                     const top5 = activeData.slice(0, 5);
@@ -1121,6 +1153,10 @@
             };
 
             const renderDistRankings = (provData) => {
+                const listBest = document.getElementById('list-dist-top5');
+                const listWarn = document.getElementById('list-dist-others');
+                if (!listBest || !listWarn) return;
+
                 let arr = Object.keys(provData).map(key => {
                     const item = provData[key];
                     let sortVal = item.real;
@@ -1130,9 +1166,6 @@
 
                 let activeData = arr.filter(item => item.val > 0);
                 activeData.sort((a,b) => b.val - a.val);
-
-                const listBest = document.getElementById('list-dist-top5');
-                const listWarn = document.getElementById('list-dist-others');
                 
                 if(listBest) {
                     const top5 = activeData.slice(0, 5);
@@ -1164,19 +1197,28 @@
                     const keyL = key.toLowerCase();
                     const pct = target > 0 ? (real / target * 100) : 0;
                     
-                    document.getElementById(`val-${keyL}-real`).innerText = fmt(real);
-                    document.getElementById(`val-${keyL}-pct`).innerText = pct.toFixed(0) + '%'; 
-                    document.getElementById(`prog-${keyL}`).style.width = Math.min(pct, 100) + '%';
-                    document.getElementById(`val-${keyL}-target`).innerText = fmt(target);
+                    const elReal = document.getElementById(`val-${keyL}-real`);
+                    if(elReal) elReal.innerText = fmt(real);
+                    
+                    const elPct = document.getElementById(`val-${keyL}-pct`);
+                    if(elPct) elPct.innerText = pct.toFixed(0) + '%'; 
+                    
+                    const elProg = document.getElementById(`prog-${keyL}`);
+                    if(elProg) elProg.style.width = Math.min(pct, 100) + '%';
+                    
+                    const elTarget = document.getElementById(`val-${keyL}-target`);
+                    if(elTarget) elTarget.innerText = fmt(target);
 
                     const elRowSisa = document.getElementById(`row-${keyL}-sisa`);
-                    const sisa = target - real;
-                    if (sisa <= 0) {
-                        elRowSisa.innerHTML = '<i class="fas fa-check-circle"></i> Tercapai';
-                        elRowSisa.style.color = 'var(--color-success)'; 
-                    } else {
-                        elRowSisa.innerHTML = `Sisa Alokasi: <span id="val-${keyL}-sisa">${fmt(sisa)}</span>`;
-                        elRowSisa.style.color = 'var(--color-danger)'; 
+                    if (elRowSisa) {
+                        const sisa = target - real;
+                        if (sisa <= 0) {
+                            elRowSisa.innerHTML = '<i class="fas fa-check-circle"></i> Tercapai';
+                            elRowSisa.style.color = 'var(--color-success)'; 
+                        } else {
+                            elRowSisa.innerHTML = `Sisa Alokasi: <span id="val-${keyL}-sisa">${fmt(sisa)}</span>`;
+                            elRowSisa.style.color = 'var(--color-danger)'; 
+                        }
                     }
 
                     // Growth
@@ -1185,14 +1227,23 @@
                     else if (real > 0) { growth = 100; }
                     
                     const elGrowthVal = document.getElementById(`growth-${keyL}-val`);
-                    const sign = growth > 0 ? '+' : '';
-                    elGrowthVal.innerText = sign + growth.toFixed(1) + '%';
-                    elGrowthVal.style.color = isUp ? 'var(--color-success)' : 'var(--color-danger)';
+                    if (elGrowthVal) {
+                        const sign = growth > 0 ? '+' : '';
+                        elGrowthVal.innerText = sign + growth.toFixed(1) + '%';
+                        elGrowthVal.style.color = isUp ? 'var(--color-success)' : 'var(--color-danger)';
+                    }
 
-                    document.getElementById(`year-curr-${keyL}`).innerText = state.selectedYear;
-                    document.getElementById(`val-${keyL}-curr`).innerText = fmt(real);
-                    document.getElementById(`year-prev-${keyL}`).innerText = state.selectedYear - 1;
-                    document.getElementById(`val-${keyL}-prev`).innerText = fmt(prev);
+                    const elYearCurr = document.getElementById(`year-curr-${keyL}`);
+                    if(elYearCurr) elYearCurr.innerText = state.selectedYear;
+                    
+                    const elValCurr = document.getElementById(`val-${keyL}-curr`);
+                    if(elValCurr) elValCurr.innerText = fmt(real);
+                    
+                    const elYearPrev = document.getElementById(`year-prev-${keyL}`);
+                    if(elYearPrev) elYearPrev.innerText = state.selectedYear - 1;
+                    
+                    const elValPrev = document.getElementById(`val-${keyL}-prev`);
+                    if(elValPrev) elValPrev.innerText = fmt(prev);
                 };
                 updateCard('UREA');
                 updateCard('NPK');
@@ -1206,13 +1257,18 @@
                     const prev = stats.prev[key].real;
                     const keyL = key.toLowerCase();
                     
-                    document.getElementById(`val-dist-${keyL}-real`).innerText = fmt(real);
+                    const elReal = document.getElementById(`val-dist-${keyL}-real`);
+                    if(elReal) elReal.innerText = fmt(real);
                     
                     // Populate Split View
-                    document.getElementById(`val-dist-${keyL}-inbag`).innerText = fmt(details.bag);
-                    document.getElementById(`val-dist-${keyL}-curah`).innerText = fmt(details.bulk);
-                    document.getElementById(`val-dist-${keyL}-truck`).innerText = fmt(details.land);
-                    document.getElementById(`val-dist-${keyL}-kapal`).innerText = fmt(details.sea);
+                    const elInbag = document.getElementById(`val-dist-${keyL}-inbag`);
+                    if(elInbag) elInbag.innerText = fmt(details.bag);
+                    const elCurah = document.getElementById(`val-dist-${keyL}-curah`);
+                    if(elCurah) elCurah.innerText = fmt(details.bulk);
+                    const elTruck = document.getElementById(`val-dist-${keyL}-truck`);
+                    if(elTruck) elTruck.innerText = fmt(details.land);
+                    const elKapal = document.getElementById(`val-dist-${keyL}-kapal`);
+                    if(elKapal) elKapal.innerText = fmt(details.sea);
 
                     // Growth
                     let growth = 0; let isUp = true;
@@ -1220,14 +1276,23 @@
                     else if (real > 0) { growth = 100; }
                     
                     const elGrowthVal = document.getElementById(`growth-dist-${keyL}-val`);
-                    const sign = growth > 0 ? '+' : '';
-                    elGrowthVal.innerText = sign + growth.toFixed(1) + '%';
-                    elGrowthVal.style.color = isUp ? 'var(--color-success)' : 'var(--color-danger)';
+                    if (elGrowthVal) {
+                        const sign = growth > 0 ? '+' : '';
+                        elGrowthVal.innerText = sign + growth.toFixed(1) + '%';
+                        elGrowthVal.style.color = isUp ? 'var(--color-success)' : 'var(--color-danger)';
+                    }
 
-                    document.getElementById(`year-curr-dist-${keyL}`).innerText = state.selectedYear;
-                    document.getElementById(`val-dist-${keyL}-curr`).innerText = fmt(real);
-                    document.getElementById(`year-prev-dist-${keyL}`).innerText = state.selectedYear - 1;
-                    document.getElementById(`val-dist-${keyL}-prev`).innerText = fmt(prev);
+                    const elYearCurr = document.getElementById(`year-curr-dist-${keyL}`);
+                    if(elYearCurr) elYearCurr.innerText = state.selectedYear;
+                    
+                    const elValCurr = document.getElementById(`val-dist-${keyL}-curr`);
+                    if(elValCurr) elValCurr.innerText = fmt(real);
+
+                    const elYearPrev = document.getElementById(`year-prev-dist-${keyL}`);
+                    if(elYearPrev) elYearPrev.innerText = state.selectedYear - 1;
+                    
+                    const elValPrev = document.getElementById(`val-dist-${keyL}-prev`);
+                    if(elValPrev) elValPrev.innerText = fmt(prev);
                 };
                 updateCard('UREA');
                 updateCard('NPK');
@@ -1322,8 +1387,8 @@
                         NPK: { bag: 0, bulk: 0, land: 0, sea: 0 }
                     },
                     nasional: { 
-                        UREA: {real:Array(12).fill(0), target:Array(12).fill(0), land:Array(12).fill(0), sea:Array(12).fill(0)}, 
-                        NPK: {real:Array(12).fill(0), target:Array(12).fill(0), land:Array(12).fill(0), sea:Array(12).fill(0)} 
+                        UREA: {real:Array(12).fill(0), target:Array(12).fill(0), land:Array(12).fill(0), sea:Array(12).fill(0), stock:Array(12).fill(0)}, 
+                        NPK: {real:Array(12).fill(0), target:Array(12).fill(0), land:Array(12).fill(0), sea:Array(12).fill(0), stock:Array(12).fill(0)} 
                     },
                     provinsi: {}
                 };
@@ -1332,6 +1397,9 @@
                 if (statsGlobal) {
                     distStats.nasional.UREA.target = statsGlobal.nasional.UREA.target;
                     distStats.nasional.NPK.target = statsGlobal.nasional.NPK.target;
+                    // Copy Stock data from Sales stats
+                    distStats.nasional.UREA.stock = statsGlobal.nasional.UREA.stock;
+                    distStats.nasional.NPK.stock = statsGlobal.nasional.NPK.stock;
                 }
 
                 const dropdownProvs = new Set();
@@ -1405,8 +1473,12 @@
             const updateDashboard = () => {
                 const { page } = state;
                 
-                document.getElementById('view-sales').style.display = page === 'SALES' ? 'block' : 'none';
-                document.getElementById('view-distribution').style.display = page === 'DISTRIBUSI' ? 'block' : 'none';
+                // Ensure elements exist before accessing style
+                const elSales = document.getElementById('view-sales');
+                const elDist = document.getElementById('view-distribution');
+                
+                if (elSales) elSales.style.display = page === 'SALES' ? 'block' : 'none';
+                if (elDist) elDist.style.display = page === 'DISTRIBUSI' ? 'block' : 'none';
 
                 processSalesData();
                 if (page === 'DISTRIBUSI') {
@@ -1425,8 +1497,10 @@
             };
 
             const fetchData = async () => {
-                document.getElementById('loader').style.display = 'flex';
-                setTimeout(() => { if(document.getElementById('loader')) document.getElementById('loader').style.display = 'none'; }, 10000);
+                const loader = document.getElementById('loader');
+                if (loader) loader.style.display = 'flex';
+                
+                setTimeout(() => { if(loader) loader.style.display = 'none'; }, 10000);
 
                 try {
                     const res = await fetch(API_URL);
@@ -1449,17 +1523,12 @@
                     }
 
                     // --- NEW: EXTRACT INFO_AI DATA ---
-                    // Assuming the API returns info_ai as part of the JSON response or mixed in
-                    // If your API returns mixed rows, we filter them here.
-                    // Based on your AppScript, info_ai rows should have specific columns.
-                    // Let's filter them out into a separate state variable.
-                    
                     const salesDistData = [];
                     const aiData = [];
 
                     data.forEach(row => {
                         // Check if row belongs to info_ai based on columns
-                        if (row.INFORMASI && row.KATEGORI_AI) { // Assuming these keys exist from AppScript
+                        if (row.INFORMASI && row.KATEGORI_AI) { 
                              aiData.push(row);
                         } else {
                              salesDistData.push(row);
@@ -1473,7 +1542,7 @@
                     console.error("Fetch Error:", err);
                     alert("Gagal mengambil data: " + err.message);
                 } finally {
-                    if(document.getElementById('loader')) document.getElementById('loader').style.display = 'none';
+                    if(loader) loader.style.display = 'none';
                 }
             };
 
@@ -1586,15 +1655,25 @@
                 }
 
                 const promptText = `
-                    Peran: Senior Data Analyst.
-                    Konteks Data Kuantitatif: ${ctxData}
-                    ${contextString}
+                    Peran: Senior Data Analyst Logistik & Penjualan Pupuk.
                     
-                    Tugas: Berikan Executive Summary super ringkas (Max 3 poin). 
-                    Jika ada Faktor Eksternal yang relevan, HUBUNGKAN dengan performa data kuantitatif.
-                    Contoh: "Realisasi rendah kemungkinan disebabkan oleh [Info Cuaca]..."
+                    Data Kuantitatif:
+                    ${ctxData}
                     
-                    Format Output (HTML Murni tanpa markdown, gunakan bullet points <ul><li>...</li></ul>):
+                    Faktor Eksternal (Jika ada):
+                    ${contextString || "Tidak ada info tambahan."}
+                    
+                    Instruksi:
+                    Berikan 3 poin analisis ringkas (Executive Summary) berdasarkan data di atas.
+                    Gunakan format daftar (bullet points) agar mudah dibaca.
+                    Hanya sebutkan cuaca/kebijakan jika ada di data "Faktor Eksternal".
+                    
+                    Format Output (HTML saja, tanpa markdown \`\`\`):
+                    <ul style="margin:0; padding-left:1.2em">
+                        <li>Poin 1...</li>
+                        <li>Poin 2...</li>
+                        <li>Poin 3...</li>
+                    </ul>
                 `;
 
                 try {
@@ -1623,10 +1702,11 @@
                     state.page = pageType;
                     state.sector = sectorType;
                     
-                    document.getElementById('nav-sales-subsidi').classList.remove('active');
-                    document.getElementById('nav-sales-retail').classList.remove('active');
-                    document.getElementById('nav-dist-subsidi').classList.remove('active');
-                    document.getElementById('nav-dist-retail').classList.remove('active');
+                    const navIds = ['nav-sales-subsidi', 'nav-sales-retail', 'nav-dist-subsidi', 'nav-dist-retail'];
+                    navIds.forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) el.classList.remove('active');
+                    });
                     
                     let activeId = '';
                     let titlePrefix = '';
@@ -1641,10 +1721,12 @@
                         titlePrefix = 'Distribusi';
                     }
                     
-                    if(activeId) document.getElementById(activeId).classList.add('active');
+                    const activeEl = document.getElementById(activeId);
+                    if(activeEl) activeEl.classList.add('active');
                     
                     const sectorLabel = sectorType === 'SUBSIDI' ? 'Subsidi' : 'Retail';
-                    document.getElementById('page-title-text').innerText = `${titlePrefix} ${sectorLabel}`;
+                    const pageTitle = document.getElementById('page-title-text');
+                    if (pageTitle) pageTitle.innerText = `${titlePrefix} ${sectorLabel}`;
 
                     updateDashboard();
                     if(window.innerWidth <= 768) { state.sidebarOpen = false; renderSidebar(); }
