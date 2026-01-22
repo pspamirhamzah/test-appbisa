@@ -642,7 +642,7 @@
                             <div class="card-front">
                                 <div class="chart-header">
                                     <div style="display:flex; align-items:center; gap:8px;">
-                                        <div class="chart-title">Tren Distribusi Nasional</div>
+                                        <div class="chart-title">Distribusi Nasional</div>
                                         <button class="ai-icon-btn" onclick="app.analyzeData('nasionalDist')" title="AI Insight"><i class="fas fa-wand-magic-sparkles"></i></button>
                                     </div>
                                     <div class="btn-group">
@@ -690,14 +690,14 @@
                 <div class="ranking-grid">
                     <div class="card">
                         <div class="chart-header">
-                            <div class="chart-title big-icon">Top Distribusi</div>
+                            <div class="chart-title big-icon">Distribusi Tertinggi</div>
                             <i class="fas fa-truck-fast" style="color: var(--color-gold); font-size: 18px;"></i>
                         </div>
                         <div id="list-dist-top5" class="rank-list"></div>
                     </div>
                     <div class="card">
                         <div class="chart-header">
-                            <div class="chart-title big-icon" style="color: var(--color-danger);">Lowest Distribusi</div>
+                            <div class="chart-title big-icon" style="color: var(--color-danger);">Distribusi Terendah</div>
                             <i class="fas fa-exclamation-circle" style="color: var(--color-danger); font-size: 18px;"></i>
                         </div>
                         <div id="list-dist-others" class="rank-list"></div>
@@ -1059,6 +1059,7 @@
                 let mLand = Array(12).fill(0);
                 let mSea = Array(12).fill(0);
                 let mTarget = Array(12).fill(0);
+                let mStock = Array(12).fill(0);
 
                 // Calculate for specific province
                 state.rawData.forEach(r => {
@@ -1081,6 +1082,10 @@
                         else if (r.JENIS === 'ALOKASI' || r.JENIS === 'RKO') {
                              mTarget[r.BULAN] += r.TONASE;
                         }
+                        // Stock Data
+                        else if (r.JENIS.includes('STOK') || r.JENIS.includes('STOCK')) {
+                             mStock[r.BULAN] += r.TONASE;
+                        }
                     }
                 });
 
@@ -1090,11 +1095,31 @@
                 const colorKapal = isUrea ? '#fcd34d' : '#7dd3fc';
                 const targetIcon = createDashedCircle('#999');
 
+                // MODIFIED: Stock Style
+                const colorStock = '#10b981'; // Green for Stock (Emerald)
+                const gradientStock = ctx.createLinearGradient(0, 0, 0, 300);
+                gradientStock.addColorStop(0, hexToRgbA(colorStock, 0.4));
+                gradientStock.addColorStop(1, hexToRgbA(colorStock, 0.0));
+
                 charts.provinsiDist = new Chart(ctx, {
                     type: 'bar',
                     data: {
                         labels: ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'],
                         datasets: [
+                            {
+                                type: 'line', 
+                                label: 'Stok', 
+                                data: mStock, 
+                                borderColor: colorStock, 
+                                backgroundColor: gradientStock,
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.4, 
+                                pointRadius: 4,
+                                pointHoverRadius: 6,
+                                pointStyle: 'circle',
+                                order: 0 
+                            },
                             {
                                 type: 'line', label: 'Alokasi', data: mTarget, borderColor: '#666', borderDash: [6, 6], borderWidth: 2, fill: false, tension: 0.4, pointRadius: 0, pointStyle: targetIcon, order: 1
                             },
