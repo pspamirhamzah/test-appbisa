@@ -996,7 +996,7 @@
                         datasets: [
                             {
                                 type: 'line', // Stock Line (Updated)
-                                label: 'Stok Aktual', 
+                                label: 'Stok', 
                                 data: data.stock, // Added Stock Data
                                 borderColor: '#10b981', // Green for Stock
                                 borderWidth: 2, 
@@ -1006,7 +1006,7 @@
                                 order: 0 // On Top
                             },
                             {
-                                type: 'line', label: 'Target Sales', data: data.target, 
+                                type: 'line', label: 'Alokasi', data: data.target, 
                                 borderColor: '#666', borderDash: [6, 6], borderWidth: 2, 
                                 fill: false, tension: 0.4, pointRadius: 0, pointStyle: createDashedCircle('#999'), order: 1
                             },
@@ -1087,7 +1087,7 @@
                         labels: ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'],
                         datasets: [
                             {
-                                type: 'line', label: 'Target Sales', data: mTarget, borderColor: '#666', borderDash: [6, 6], borderWidth: 2, fill: false, tension: 0.4, pointRadius: 0, pointStyle: targetIcon, order: 1
+                                type: 'line', label: 'Alokasi', data: mTarget, borderColor: '#666', borderDash: [6, 6], borderWidth: 2, fill: false, tension: 0.4, pointRadius: 0, pointStyle: targetIcon, order: 1
                             },
                             {
                                 label: 'Truk (Inbag)', data: mLand, backgroundColor: colorTruck, stack: 'stack1', order: 2
@@ -1601,7 +1601,7 @@
                     const totalReal = d.real.reduce((a,b)=>a+b,0);
                     const totalTarget = d.target.reduce((a,b)=>a+b,0);
                     const pct = totalTarget > 0 ? (totalReal/totalTarget*100).toFixed(1) : 0;
-                    ctxData = `DATA: Distribusi Nasional, Produk ${prod}, Sektor ${sec}, Tahun ${year}. Realisasi Distribusi: ${formatNumber(totalReal)} Ton. Target Sales: ${formatNumber(totalTarget)} Ton. Capaian: ${pct}%.`;
+                    ctxData = `DATA: Distribusi Nasional, Produk ${prod}, Sektor ${sec}, Tahun ${year}. Realisasi Distribusi: ${formatNumber(totalReal)} Ton. Alokasi: ${formatNumber(totalTarget)} Ton. Capaian: ${pct}%.`;
                 } else if (type.includes('provinsi')) {
                     const isDist = type.includes('Dist');
                     const dropdownId = isDist ? 'dropdown-provinsi-dist' : 'dropdown-provinsi';
