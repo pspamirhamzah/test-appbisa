@@ -3,23 +3,357 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard APP Bisa</title>
-    <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+    <title>Dashboard APP Bisa - Sales & Distribution</title>
 
+    <!-- FAVICON & ICONS -->
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <link rel="apple-touch-icon" href="logo-og.png">
+
+    <!-- METADATA & OPEN GRAPH (Thumbnail) -->
+    <meta name="description" content="Monitoring Performa Penjualan & Distribusi">
+    <meta property="og:title" content="Dashboard APP Bisa">
+    <meta property="og:description" content="Monitoring Performa Penjualan & Distribusi Pupuk">
+    <meta property="og:image" content="thumbnail.jpg">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:type" content="website">
+
+    <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="css/style.css">
+
+    <style>
+        /* ========================================= */
+        /* 1. VARIABLES & THEME                      */
+        /* ========================================= */
+        :root {
+            /* Dark Theme Variables (Default) */
+            --bg-body: #212121;
+            --bg-sidebar: #171717;
+            --bg-card: #2f2f2f;
+            --bg-hover: #424242;
+            
+            --text-primary: #ececec;
+            --text-secondary: #b3b3b3;
+            --text-muted: #666666;
+            
+            --border-color: #424242;
+            --border-subtle: #3a3a3a;
+            --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+            
+            /* Brand Colors (Dark Mode) */
+            --color-urea: #FFDE00;     
+            --color-npk: #38bdf8;      
+            --color-success: #4ade80;  
+            --color-danger: #f87171;   
+            --color-stock: #a8a29e;    
+            --color-accent-1: #ffffff; 
+            
+            /* Medal Colors */
+            --color-gold: #fbbf24;
+            --color-silver: #94a3b8;
+            --color-bronze: #d97706;
+
+            /* Layout */
+            --sidebar-width: 260px;
+            --header-height: 64px;
+            --card-radius: 16px;
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* LIGHT THEME OVERRIDES */
+        [data-theme="light"] {
+            --bg-body: #f3f4f6;
+            --bg-sidebar: #ffffff;
+            --bg-card: #ffffff;
+            --bg-hover: #f9fafb;
+            
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --text-muted: #9ca3af;
+            
+            --border-color: #e5e7eb;
+            --border-subtle: #f3f4f6;
+            --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+
+            --color-accent-1: #111827; 
+            
+            /* Adjusted Colors for Light Mode (Better Contrast) */
+            --color-urea: #d97706; /* Darker Yellow/Amber for better visibility on white */
+            --color-npk: #0284c7;  /* Slightly darker blue */
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+            font-size: 14px;
+            transition: background-color var(--transition), color var(--transition);
+        }
+
+        /* ========================================= */
+        /* 2. SIDEBAR                                */
+        /* ========================================= */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 20px 16px;
+            position: fixed;
+            top: 0; bottom: 0; left: 0;
+            z-index: 100;
+            transition: transform var(--transition), background-color var(--transition), border-color var(--transition);
+            transform: translateX(0); 
+        }
+
+        .sidebar.closed { transform: translateX(-100%); }
+
+        .brand {
+            padding-bottom: 20px;
+            border-bottom: none;
+            margin-bottom: 10px;
+            white-space: nowrap;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            min-height: 50px; 
+        }
+
+        .brand-content { display: flex; flex-direction: column; margin-left: 10px; }
+        .brand h2 { font-size: 20px; font-weight: 800; color: var(--text-primary); margin: 0; line-height: 1.2; letter-spacing: 0.5px; }
+        .brand h2 span { font-weight: 400; color: var(--color-urea); }
+        .brand p { font-size: 11px; color: var(--text-secondary); margin: 2px 0 0 0; font-weight: 400; letter-spacing: 0.5px; }
+
+        .nav-header { 
+            font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); 
+            margin: 16px 12px 8px; letter-spacing: 1px; white-space: nowrap; transition: opacity 0.2s; 
+        }
+
+        .nav-item {
+            display: flex; align-items: center; gap: 14px;
+            padding: 12px; border-radius: 12px; cursor: pointer; color: var(--text-secondary);
+            font-size: 14px; font-weight: 500; transition: all 0.2s;
+            margin-bottom: 4px; white-space: nowrap; overflow: hidden;
+        }
+        .nav-item i { width: 20px; text-align: center; font-size: 16px; flex-shrink: 0; }
+        .nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .nav-item.active { background: var(--bg-hover); color: var(--text-primary); font-weight: 600; }
+        .nav-item.active i { color: var(--color-urea); }
+
+        .nav-spacer { flex-grow: 1; }
+        .nav-login { margin-top: auto; border-top: none; padding-top: 10px; }
+
+        .sidebar-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5); z-index: 90;
+            display: none; opacity: 0; transition: opacity 0.3s;
+        }
+        .sidebar-overlay.show { display: block; opacity: 1; }
+
+        /* ========================================= */
+        /* 3. MAIN CONTENT                           */
+        /* ========================================= */
+        .main-content {
+            flex: 1; margin-left: var(--sidebar-width); display: flex;
+            flex-direction: column; height: 100vh; overflow: hidden;
+            transition: margin-left var(--transition);
+        }
+        .main-content.closed { margin-left: 0; }
+
+        /* HEADER */
+        header {
+            height: var(--header-height);
+            background: var(--bg-body); 
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px; flex-shrink: 0;
+            box-shadow: var(--shadow-card);
+            z-index: 40; position: relative;
+            transition: background-color var(--transition);
+        }
+        .header-left { display: flex; align-items: center; gap: 20px; }
+
+        .btn-toggle-sidebar, .btn-theme-toggle {
+            background: transparent; border: none; color: var(--text-secondary);
+            font-size: 18px; cursor: pointer; padding: 8px; border-radius: 8px;
+            transition: color 0.2s;
+        }
+        .btn-toggle-sidebar:hover, .btn-theme-toggle:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+        .page-title h1 { font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 0px; }
+        .page-title p { font-size: 11px; color: var(--text-secondary); }
+
+        .header-actions { display: flex; align-items: center; gap: 12px; }
+
+        /* CUSTOM DROPDOWN */
+        .custom-select {
+            appearance: none; -webkit-appearance: none; -moz-appearance: none;
+            background-color: var(--bg-body); 
+            border: 1px solid var(--border-color); 
+            color: var(--text-primary); 
+            width: auto; min-width: 90px; 
+            padding: 8px 32px 8px 14px; border-radius: 8px; 
+            font-size: 12px; font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 600; cursor: pointer; outline: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 8px center; background-size: 16px;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .custom-select:hover { border-color: var(--text-secondary); background-color: var(--bg-hover); }
+        .custom-select option { background-color: var(--bg-card); color: var(--text-primary); padding: 10px; }
+
+        .content-scroll { flex: 1; overflow-y: auto; padding: 20px 32px 40px; }
+
+        /* GRIDS & CARDS */
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 20px; }
+        .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .ranking-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+
+        .card {
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: var(--card-radius); padding: 24px;
+            display: flex; flex-direction: column; transition: transform 0.2s;
+            position: relative; min-width: 0;
+            box-shadow: var(--shadow-card);
+        }
+        .card:hover { border-color: var(--border-subtle); }
+
+        /* KPI MODERN STYLE */
+        .kpi-modern { padding: 20px; display: flex; flex-direction: column; justify-content: center; }
+        .kpi-head-modern { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+        .kpi-title-modern { font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 0.5px; margin-top: 4px; }
+        .kpi-icon { width: auto; height: auto; font-size: 18px; background: transparent; color: var(--text-primary); }
+        .icon-urea { color: var(--color-urea); }
+        .icon-npk { color: var(--color-npk); }
+        .kpi-main-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 12px; }
+        .kpi-big { font-size: 28px; font-weight: 800; color: var(--text-primary); line-height: 1; }
+        .kpi-pct-small { font-size: 14px; font-weight: 700; }
+        .pct-urea { color: var(--color-urea); }
+        .pct-npk { color: var(--color-npk); }
+        .progress-track-modern { height: 6px; width: 100%; background: var(--bg-hover); border-radius: 10px; margin-bottom: 12px; overflow: hidden; }
+        .progress-bar { height: 100%; border-radius: 10px; }
+        .bg-urea { background: var(--color-urea); }
+        .bg-npk { background: var(--color-npk); }
+        .kpi-detail-row { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
+        .kpi-detail-row span span { color: var(--text-secondary); font-weight: 600; }
+        .kpi-sisa-row { font-size: 11px; color: var(--color-danger); font-weight: 600; }
+        .kpi-subtext { font-size: 11px; color: var(--text-muted); margin-bottom: 16px; }
+        .growth-legend { display: flex; flex-direction: column; gap: 6px; border-top: 1px solid var(--border-subtle); padding-top: 12px; }
+        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--text-secondary); }
+        .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+        .bg-grey { background: #666; }
+
+        /* KPI DIST SPLIT STYLE */
+        .kpi-dist-details { display: flex; justify-content: space-between; margin-top: 8px; border-top: 1px solid var(--border-subtle); padding-top: 12px; }
+        .dist-col { width: 48%; }
+        /* Removed dist-col-header as requested to remove "KEMASAN/MODA" text */
+        .dist-item { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; }
+        .dist-item span:last-child { font-weight: 600; color: var(--text-primary); }
+        
+        /* CHART & FILTER */
+        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .chart-title { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+        .big-icon { font-size: 15px; }
+        .btn-group { background: var(--bg-body); padding: 4px; border-radius: 10px; display: flex; gap: 2px; width: auto; border: 1px solid var(--border-color); }
+        .btn-filter {
+            background: transparent; border: 1px solid transparent; color: var(--text-secondary);
+            padding: 6px 14px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+        }
+        .btn-filter:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .btn-filter.active { background: var(--bg-card); color: var(--text-primary); box-shadow: 0 1px 2px rgba(0,0,0,0.2); border-color: var(--border-color); }
+        #btn-nas-urea.active, #btn-dist-urea.active, #btn-nas-dist-urea.active { color: var(--color-urea) !important; border-color: var(--color-urea) !important; background: rgba(255, 222, 0, 0.1); }
+        #btn-nas-npk.active, #btn-dist-npk.active, #btn-nas-dist-npk.active { color: var(--color-npk) !important; border-color: var(--color-npk) !important; background: rgba(56, 189, 248, 0.1); }
+        .chart-canvas-container { position: relative; height: 280px; width: 100%; }
+
+        /* RANKINGS */
+        .rank-list { display: flex; flex-direction: column; gap: 0; }
+        .rank-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border-color); }
+        .rank-item:last-child { border-bottom: none; }
+        .rank-left { display: flex; align-items: center; gap: 15px; }
+        .rank-num { width: 28px; min-width: 28px; height: 28px; border-radius: 6px; background: var(--bg-body); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; color: var(--text-secondary); }
+        .rank-num.medal-box { background: transparent; font-size: 18px; }
+        .rank-num.warn { background: rgba(239, 68, 68, 0.15); color: var(--color-danger); }
+        .rank-name { font-size: 13px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .rank-val { font-size: 13px; font-weight: 700; text-align: right; }
+        .val-best { color: var(--text-primary); } /* Updated for Light Mode */
+        .val-warn { color: var(--color-danger); }
+        .rank-name.gold { color: var(--color-gold); }
+        .rank-name.silver { color: var(--color-silver); }
+        .rank-name.bronze { color: var(--color-bronze); }
+
+        /* FOOTER */
+        .footer { text-align: center; padding: 30px 0 10px; color: var(--text-muted); border-top: none; margin-top: 20px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .footer h4 { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin: 0; }
+        .footer p { font-size: 10px; opacity: 0.6; margin: 0; letter-spacing: 1px; }
+
+        /* MODAL & UTILS */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); z-index: 999; display: none; justify-content: center; align-items: center; }
+        .modal-box { background: var(--bg-card); width: 100%; max-width: 320px; padding: 30px; border: 1px solid var(--border-color); box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center; border-radius: 16px; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-header h3 { font-size: 16px; margin: 0; color: var(--text-primary); }
+        .modal-header button { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 16px; }
+        .input-square { width: 100%; padding: 12px; margin-bottom: 20px; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-primary); font-family: inherit; font-size: 14px; border-radius: 8px; outline: none; }
+        .input-square:focus { border-color: var(--text-primary); }
+        .btn-square { width: 100%; padding: 12px; background: var(--text-primary); color: var(--bg-body); font-weight: 700; border: none; cursor: pointer; border-radius: 8px; transition: 0.2s; }
+        .btn-square:hover { opacity: 0.9; }
+
+        /* LOADER */
+        #loader { position: fixed; inset: 0; background: var(--bg-body); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .spinner { width: 40px; height: 40px; border: 3px solid var(--border-color); border-top-color: var(--color-urea); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 16px; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* AI & FLIP CARD */
+        .card-flip-container { perspective: 1000px; height: 380px; position: relative; }
+        .card-flip-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; }
+        .card-flip-inner.flipped { transform: rotateY(180deg); }
+        .card-front, .card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: var(--card-radius); background: var(--bg-card); border: 1px solid var(--border-color); padding: 24px; display: flex; flex-direction: column; }
+        .card-back { transform: rotateY(180deg); background: linear-gradient(145deg, var(--bg-hover), var(--bg-card)); }
+        .ai-icon-btn { background: var(--bg-hover); border: 1px solid var(--border-subtle); color: var(--text-secondary); width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 12px; transition: all 0.2s; }
+        .ai-icon-btn:hover { background: var(--border-color); color: var(--text-primary); }
+        .btn-back { align-self: flex-start; background: transparent; border: none; color: var(--text-muted); font-size: 11px; font-weight: 700; cursor: pointer; margin-bottom: 15px; display: flex; align-items: center; gap: 6px; }
+        .ai-content { font-size: 12px; line-height: 1.6; color: var(--text-secondary); flex: 1; overflow-y: auto; }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); width: 240px; }
+            .sidebar.show { transform: translateX(0); }
+            .main-content { margin-left: 0 !important; }
+            body { font-size: 12px; }
+            header { padding: 0 16px; height: 56px; min-height: 56px; }
+            .kpi-grid { grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+            .kpi-modern { padding: 14px; min-height: 140px; justify-content: flex-start; }
+            .kpi-big { font-size: 20px; }
+            .chart-grid, .ranking-grid { grid-template-columns: 1fr; gap: 12px; margin-bottom: 12px; }
+            .chart-canvas-container { height: auto !important; flex-grow: 1; width: 100%; position: relative; min-height: 0; }
+            .card-flip-container { height: 380px; }
+            .content-scroll { padding: 12px 16px 80px; }
+        }
+    </style>
 </head>
 <body>
 
+    <!-- LOADER -->
     <div id="loader">
         <div class="spinner"></div>
         <div style="font-size: 12px; color: var(--text-secondary); letter-spacing: 2px;">MEMUAT DATA...</div>
     </div>
 
+    <!-- SIDEBAR OVERLAY FOR MOBILE -->
     <div class="sidebar-overlay" id="sidebar-overlay" onclick="app.toggleSidebar()"></div>
 
+    <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">
         <div class="brand">
             <div class="brand-content">
@@ -28,22 +362,34 @@
             </div>
         </div>
 
-        <div class="nav-header">PENJUALAN (SALES)</div>
-        <div class="nav-item active" id="menu-sales-subsidi" onclick="app.navigate('SALES', 'SUBSIDI')">
-            <i class="fas fa-hand-holding-dollar"></i> <span>Subsidi</span>
+        <!-- MENU PENJUALAN -->
+        <div class="nav-header">PENJUALAN</div>
+        <div class="nav-item active" id="nav-sales-subsidi" onclick="app.navigate('SALES', 'SUBSIDI')">
+            <i class="fas fa-industry"></i> <span>Subsidi</span>
         </div>
-        <div class="nav-item" id="menu-sales-retail" onclick="app.navigate('SALES', 'RETAIL')">
+        <div class="nav-item" id="nav-sales-retail" onclick="app.navigate('SALES', 'RETAIL')">
+            <i class="fas fa-store"></i> <span>Retail</span>
+        </div>
+        
+        <!-- MENU DISTRIBUSI BARU -->
+        <div class="nav-header">DISTRIBUSI</div>
+        <div class="nav-item" id="nav-dist-subsidi" onclick="app.navigate('DISTRIBUSI', 'SUBSIDI')">
+            <i class="fas fa-industry"></i> <span>Subsidi</span>
+        </div>
+        <div class="nav-item" id="nav-dist-retail" onclick="app.navigate('DISTRIBUSI', 'RETAIL')">
             <i class="fas fa-store"></i> <span>Retail</span>
         </div>
 
-        <div class="nav-header">DISTRIBUSI (LOGISTIK)</div>
-        <div class="nav-item" id="menu-dist-subsidi" onclick="app.navigate('DISTRIBUTION', 'SUBSIDI')">
-            <i class="fas fa-truck-fast"></i> <span>Subsidi</span>
+        <div id="admin-menu" style="display: none;">
+            <div class="nav-header">ADMINISTRATOR</div>
+            <div class="nav-item" onclick="app.showLoginModal()"> <!-- Placeholder -->
+                <i class="fas fa-plus-square"></i> <span>Input Data</span>
+            </div>
+            <div class="nav-item" onclick="app.logout()">
+                <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+            </div>
         </div>
-        <div class="nav-item" id="menu-dist-retail" onclick="app.navigate('DISTRIBUTION', 'RETAIL')">
-            <i class="fas fa-boxes-stacked"></i> <span>Retail</span>
-        </div>
-        
+
         <div class="nav-spacer"></div>
         
         <div class="nav-login" id="login-btn-container">
@@ -53,18 +399,19 @@
         </div>
     </aside>
 
+    <!-- MAIN CONTENT -->
     <main class="main-content" id="main-content">
         <header>
             <div class="header-left">
                 <button class="btn-toggle-sidebar" onclick="app.toggleSidebar()"><i class="fas fa-bars"></i></button>
                 <div class="page-title">
-                    <h1 id="page-title-text">Penjualan - Subsidi</h1>
+                    <h1 id="page-title-text">Penjualan Subsidi</h1>
                     <p id="header-update-text">Overview Performa</p>
                 </div>
             </div>
             <div class="header-actions">
                 <button class="btn-theme-toggle" onclick="app.toggleTheme()" title="Ganti Tema">
-                    <i class="fas fa-sun" id="theme-icon"></i>
+                    <i id="theme-icon" class="fas fa-sun"></i>
                 </button>
                 <select class="custom-select" id="year-select" onchange="app.changeYear(this.value)"></select>
             </div>
@@ -72,140 +419,289 @@
 
         <div class="content-scroll">
 
-            <div class="kpi-grid">
-                <div class="card kpi-modern">
-                    <div class="kpi-head-modern">
-                        <div class="kpi-title-modern" id="lbl-urea-title">Realisasi Urea</div>
-                        <div class="kpi-icon icon-urea"><i class="fas fa-leaf"></i></div>
+            <!-- VIEW: SALES (Subsidi & Retail) -->
+            <div id="view-sales">
+                <div class="kpi-grid">
+                    <!-- KPI UREA -->
+                    <div class="card kpi-modern">
+                        <div class="kpi-head-modern">
+                            <div class="kpi-title-modern">Realisasi Urea</div>
+                            <div class="kpi-icon icon-urea"><i class="fas fa-leaf"></i></div>
+                        </div>
+                        <div class="kpi-main-row">
+                            <span class="kpi-big" id="val-urea-real">0</span>
+                            <span class="kpi-pct-small pct-urea" id="val-urea-pct">0%</span>
+                        </div>
+                        <div class="progress-track-modern">
+                            <div class="progress-bar bg-urea" id="prog-urea" style="width: 0%"></div>
+                        </div>
+                        <div class="kpi-detail-row">
+                            <span>Alokasi: <span id="val-urea-target">0</span></span>
+                        </div>
+                        <div class="kpi-sisa-row" id="row-urea-sisa">Sisa Alokasi: <span id="val-urea-sisa">0</span></div>
                     </div>
-                    <div class="kpi-main-row">
-                        <span class="kpi-big" id="val-urea-real">0</span>
-                        <span class="kpi-pct-small pct-urea" id="val-urea-pct">0%</span>
+
+                    <!-- KPI NPK -->
+                    <div class="card kpi-modern">
+                        <div class="kpi-head-modern">
+                            <div class="kpi-title-modern">Realisasi NPK</div>
+                            <div class="kpi-icon icon-npk"><i class="fas fa-cubes"></i></div>
+                        </div>
+                        <div class="kpi-main-row">
+                            <span class="kpi-big" id="val-npk-real">0</span>
+                            <span class="kpi-pct-small pct-npk" id="val-npk-pct">0%</span>
+                        </div>
+                        <div class="progress-track-modern">
+                            <div class="progress-bar bg-npk" id="prog-npk" style="width: 0%"></div>
+                        </div>
+                        <div class="kpi-detail-row">
+                            <span>Alokasi: <span id="val-npk-target">0</span></span>
+                        </div>
+                        <div class="kpi-sisa-row" id="row-npk-sisa">Sisa Alokasi: <span id="val-npk-sisa">0</span></div>
                     </div>
-                    <div class="progress-track-modern">
-                        <div class="progress-bar bg-urea" id="prog-urea" style="width: 0%"></div>
+
+                    <!-- Growth UREA -->
+                    <div class="card kpi-modern">
+                        <div class="kpi-head-modern">
+                            <div class="kpi-title-modern">Growth Urea (YoY)</div>
+                            <div class="kpi-icon"><i class="fas fa-chart-line"></i></div>
+                        </div>
+                        <div class="kpi-big" id="growth-urea-val">0%</div>
+                        <div class="kpi-subtext">vs Tahun Lalu</div>
+                        <div class="growth-legend">
+                            <div class="legend-item"><span class="dot bg-urea"></span> <span id="year-curr-urea">2025</span>: <span id="val-urea-curr">0</span></div>
+                            <div class="legend-item"><span class="dot bg-grey"></span> <span id="year-prev-urea">2024</span>: <span id="val-urea-prev">0</span></div>
+                        </div>
                     </div>
-                    <div class="kpi-detail-row">
-                        <span id="lbl-urea-target-wrapper">Target: <span id="val-urea-target">0</span></span>
+
+                    <!-- Growth NPK -->
+                    <div class="card kpi-modern">
+                        <div class="kpi-head-modern">
+                            <div class="kpi-title-modern">Growth NPK (YoY)</div>
+                            <div class="kpi-icon"><i class="fas fa-chart-line"></i></div>
+                        </div>
+                        <div class="kpi-big" id="growth-npk-val">0%</div>
+                        <div class="kpi-subtext">vs Tahun Lalu</div>
+                        <div class="growth-legend">
+                            <div class="legend-item"><span class="dot bg-npk"></span> <span id="year-curr-npk">2025</span>: <span id="val-npk-curr">0</span></div>
+                            <div class="legend-item"><span class="dot bg-grey"></span> <span id="year-prev-npk">2024</span>: <span id="val-npk-prev">0</span></div>
+                        </div>
                     </div>
-                    <div class="kpi-sisa-row" id="row-urea-sisa">Sisa Target: <span id="val-urea-sisa">0</span></div>
                 </div>
 
-                <div class="card kpi-modern">
-                    <div class="kpi-head-modern">
-                        <div class="kpi-title-modern" id="lbl-npk-title">Realisasi NPK</div>
-                        <div class="kpi-icon icon-npk"><i class="fas fa-cubes"></i></div>
+                <div class="chart-grid">
+                    <!-- Nasional Chart -->
+                    <div class="card-flip-container">
+                        <div class="card-flip-inner" id="flip-nasional">
+                            <div class="card-front">
+                                <div class="chart-header">
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <div class="chart-title">Realisasi Nasional</div>
+                                        <button class="ai-icon-btn" onclick="app.analyzeData('nasional')" title="AI Insight"><i class="fas fa-wand-magic-sparkles"></i></button>
+                                    </div>
+                                    <div class="btn-group">
+                                        <button class="btn-filter active f-urea" id="btn-nas-urea" onclick="app.setChartProduct('UREA')">UREA</button>
+                                        <button class="btn-filter" id="btn-nas-npk" onclick="app.setChartProduct('NPK')">NPK</button>
+                                    </div>
+                                </div>
+                                <div class="chart-canvas-container"><canvas id="chartNasional"></canvas></div>
+                            </div>
+                            <div class="card-back">
+                                <button class="btn-back" onclick="app.flipCard('nasional')"><i class="fas fa-arrow-left"></i> Kembali ke Grafik</button>
+                                <div id="ai-nasional-content" class="ai-content"></div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="kpi-main-row">
-                        <span class="kpi-big" id="val-npk-real">0</span>
-                        <span class="kpi-pct-small pct-npk" id="val-npk-pct">0%</span>
+                    
+                    <!-- Provinsi Chart -->
+                    <div class="card-flip-container">
+                        <div class="card-flip-inner" id="flip-provinsi">
+                            <div class="card-front">
+                                <div class="chart-header">
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <div class="chart-title" id="prov-chart-title">Realisasi Provinsi</div>
+                                        <button class="ai-icon-btn" onclick="app.analyzeData('provinsi')" title="AI Insight"><i class="fas fa-wand-magic-sparkles"></i></button>
+                                    </div>
+                                    <select class="custom-select" id="dropdown-provinsi" onchange="app.renderProvChart()" style="min-width: 140px;"></select>
+                                </div>
+                                <div class="chart-canvas-container">
+                                    <canvas id="chartProvinsi"></canvas>
+                                    <div id="prov-placeholder" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.4); color:var(--text-primary); border-radius:8px; backdrop-filter: blur(2px); display:none;">
+                                        <span style="background:var(--bg-body); padding:8px 16px; border-radius:20px; border:1px solid var(--border-color); font-size:12px;">
+                                            <i class="fas fa-arrow-up"></i> Pilih Provinsi
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-back">
+                                <button class="btn-back" onclick="app.flipCard('provinsi')"><i class="fas fa-arrow-left"></i> Kembali ke Grafik</button>
+                                <div id="ai-provinsi-content" class="ai-content"></div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="progress-track-modern">
-                        <div class="progress-bar bg-npk" id="prog-npk" style="width: 0%"></div>
-                    </div>
-                    <div class="kpi-detail-row">
-                        <span id="lbl-npk-target-wrapper">Target: <span id="val-npk-target">0</span></span>
-                    </div>
-                    <div class="kpi-sisa-row" id="row-npk-sisa">Sisa Target: <span id="val-npk-sisa">0</span></div>
                 </div>
 
-                <div class="card kpi-modern">
-                    <div class="kpi-head-modern">
-                        <div class="kpi-title-modern">Growth Urea (YoY)</div>
-                        <div class="kpi-icon"><i class="fas fa-chart-line"></i></div>
+                <div class="ranking-grid">
+                    <div class="card">
+                        <div class="chart-header">
+                            <div class="chart-title big-icon">Provinsi Tertinggi</div>
+                            <i class="fas fa-trophy" style="color: var(--color-gold); font-size: 18px;"></i>
+                        </div>
+                        <div id="list-top5" class="rank-list"></div>
                     </div>
-                    <div class="kpi-big" id="growth-urea-val">0%</div>
-                    <div class="kpi-subtext">vs Tahun Lalu</div>
-                    <div class="growth-legend">
-                        <div class="legend-item">
-                            <span class="dot bg-urea"></span> <span id="year-curr-urea">2025</span>: <span id="val-urea-curr">0</span>
+                    <div class="card">
+                        <div class="chart-header">
+                            <div class="chart-title big-icon" style="color: var(--color-danger);">Provinsi Terendah</div>
+                            <i class="fas fa-exclamation-circle" style="color: var(--color-danger); font-size: 18px;"></i>
                         </div>
-                        <div class="legend-item">
-                            <span class="dot bg-grey"></span> <span id="year-prev-urea">2024</span>: <span id="val-urea-prev">0</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card kpi-modern">
-                    <div class="kpi-head-modern">
-                        <div class="kpi-title-modern">Growth NPK (YoY)</div>
-                        <div class="kpi-icon"><i class="fas fa-chart-line"></i></div>
-                    </div>
-                    <div class="kpi-big" id="growth-npk-val">0%</div>
-                    <div class="kpi-subtext">vs Tahun Lalu</div>
-                    <div class="growth-legend">
-                        <div class="legend-item">
-                            <span class="dot bg-npk"></span> <span id="year-curr-npk">2025</span>: <span id="val-npk-curr">0</span>
-                        </div>
-                        <div class="legend-item">
-                            <span class="dot bg-grey"></span> <span id="year-prev-npk">2024</span>: <span id="val-npk-prev">0</span>
-                        </div>
+                        <div id="list-others" class="rank-list"></div>
                     </div>
                 </div>
             </div>
 
-            <div class="chart-grid">
-                <div class="card-flip-container">
-                    <div class="card-flip-inner" id="flip-nasional">
-                        <div class="card-front">
-                            <div class="chart-header">
-                                <div style="display:flex; align-items:center; gap:8px;">
-                                    <div class="chart-title">Tren Nasional</div>
-                                    <button class="ai-icon-btn" onclick="app.analyzeData('nasional')" title="AI Insight"><i class="fas fa-wand-magic-sparkles"></i></button>
-                                </div>
-                                <div class="btn-group">
-                                    <button class="btn-filter active" id="btn-nas-urea" onclick="app.setChartProduct('UREA')">UREA</button>
-                                    <button class="btn-filter" id="btn-nas-npk" onclick="app.setChartProduct('NPK')">NPK</button>
-                                </div>
-                            </div>
-                            <div class="chart-canvas-container"><canvas id="chartNasional"></canvas></div>
+            <!-- VIEW: DISTRIBUTION (UPDATED TO MATCH SALES) -->
+            <div id="view-distribution" style="display: none;">
+                <div class="kpi-grid">
+                    <!-- KPI UREA DIST -->
+                    <div class="card kpi-modern">
+                        <div class="kpi-head-modern">
+                            <div class="kpi-title-modern">Distribusi Urea</div>
+                            <div class="kpi-icon icon-urea"><i class="fas fa-truck-loading"></i></div>
                         </div>
-                        <div class="card-back">
-                            <button class="btn-back" onclick="app.flipCard('nasional')"><i class="fas fa-arrow-left"></i> Kembali</button>
-                            <div id="ai-nasional-content" class="ai-content"></div>
+                        <div class="kpi-main-row">
+                            <span class="kpi-big" id="val-dist-urea-real">0</span>
+                        </div>
+                        <!-- New Split Layout No Header -->
+                        <div class="kpi-dist-details">
+                            <div class="dist-col">
+                                <div class="dist-item"><span>Inbag</span><span id="val-dist-urea-inbag">0</span></div>
+                                <div class="dist-item"><span>Curah</span><span id="val-dist-urea-curah">0</span></div>
+                            </div>
+                            <div class="dist-col" style="border-left:1px solid var(--border-subtle); padding-left:12px;">
+                                <div class="dist-item"><span>Truck</span><span id="val-dist-urea-truck">0</span></div>
+                                <div class="dist-item"><span>Kapal</span><span id="val-dist-urea-kapal">0</span></div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                
-                <div class="card-flip-container">
-                    <div class="card-flip-inner" id="flip-provinsi">
-                        <div class="card-front">
-                            <div class="chart-header">
-                                <div style="display:flex; align-items:center; gap:8px;">
-                                    <div class="chart-title">Detail Provinsi</div>
-                                    <button class="ai-icon-btn" onclick="app.analyzeData('provinsi')" title="AI Insight"><i class="fas fa-wand-magic-sparkles"></i></button>
-                                </div>
-                                <select class="custom-select" id="dropdown-provinsi" onchange="app.renderProvChart()" style="min-width: 140px;"></select>
-                            </div>
-                            <div class="chart-canvas-container">
-                                <canvas id="chartProvinsi"></canvas>
-                                <div id="prov-placeholder" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.4); color:var(--text-primary); border-radius:8px; backdrop-filter: blur(2px); display:none;">
-                                    <span style="background:var(--bg-body); padding:8px 16px; border-radius:20px; border:1px solid var(--border-color); font-size:12px;">Pilih Provinsi</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-back">
-                            <button class="btn-back" onclick="app.flipCard('provinsi')"><i class="fas fa-arrow-left"></i> Kembali</button>
-                            <div id="ai-provinsi-content" class="ai-content"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            <div class="ranking-grid">
-                <div class="card">
-                    <div class="chart-header">
-                        <div class="chart-title big-icon">Provinsi Tertinggi</div>
-                        <i class="fas fa-trophy" style="color: var(--color-gold); font-size: 18px;"></i>
+                    <!-- KPI NPK DIST -->
+                    <div class="card kpi-modern">
+                        <div class="kpi-head-modern">
+                            <div class="kpi-title-modern">Distribusi NPK</div>
+                            <div class="kpi-icon icon-npk"><i class="fas fa-truck-loading"></i></div>
+                        </div>
+                        <div class="kpi-main-row">
+                            <span class="kpi-big" id="val-dist-npk-real">0</span>
+                        </div>
+                        <!-- New Split Layout No Header -->
+                         <div class="kpi-dist-details">
+                            <div class="dist-col">
+                                <div class="dist-item"><span>Inbag</span><span id="val-dist-npk-inbag">0</span></div>
+                                <div class="dist-item"><span>Curah</span><span id="val-dist-npk-curah">0</span></div>
+                            </div>
+                            <div class="dist-col" style="border-left:1px solid var(--border-subtle); padding-left:12px;">
+                                <div class="dist-item"><span>Truck</span><span id="val-dist-npk-truck">0</span></div>
+                                <div class="dist-item"><span>Kapal</span><span id="val-dist-npk-kapal">0</span></div>
+                            </div>
+                        </div>
                     </div>
-                    <div id="list-top5" class="rank-list"></div>
+
+                    <!-- Growth UREA DIST -->
+                    <div class="card kpi-modern">
+                        <div class="kpi-head-modern">
+                            <div class="kpi-title-modern">Growth Urea (YoY)</div>
+                            <div class="kpi-icon"><i class="fas fa-chart-line"></i></div>
+                        </div>
+                        <div class="kpi-big" id="growth-dist-urea-val">0%</div>
+                        <div class="kpi-subtext">vs Tahun Lalu</div>
+                        <div class="growth-legend">
+                            <div class="legend-item"><span class="dot bg-urea"></span> <span id="year-curr-dist-urea">2025</span>: <span id="val-dist-urea-curr">0</span></div>
+                            <div class="legend-item"><span class="dot bg-grey"></span> <span id="year-prev-dist-urea">2024</span>: <span id="val-dist-urea-prev">0</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Growth NPK DIST -->
+                    <div class="card kpi-modern">
+                        <div class="kpi-head-modern">
+                            <div class="kpi-title-modern">Growth NPK (YoY)</div>
+                            <div class="kpi-icon"><i class="fas fa-chart-line"></i></div>
+                        </div>
+                        <div class="kpi-big" id="growth-dist-npk-val">0%</div>
+                        <div class="kpi-subtext">vs Tahun Lalu</div>
+                        <div class="growth-legend">
+                            <div class="legend-item"><span class="dot bg-npk"></span> <span id="year-curr-dist-npk">2025</span>: <span id="val-dist-npk-curr">0</span></div>
+                            <div class="legend-item"><span class="dot bg-grey"></span> <span id="year-prev-dist-npk">2024</span>: <span id="val-dist-npk-prev">0</span></div>
+                        </div>
+                    </div>
                 </div>
-                <div class="card">
-                    <div class="chart-header">
-                        <div class="chart-title big-icon" style="color: var(--color-danger);">Provinsi Terendah</div>
-                        <i class="fas fa-exclamation-circle" style="color: var(--color-danger); font-size: 18px;"></i>
+
+                <div class="chart-grid">
+                    <!-- Nasional Chart DIST -->
+                    <div class="card-flip-container">
+                        <div class="card-flip-inner" id="flip-nasionalDist">
+                            <div class="card-front">
+                                <div class="chart-header">
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <div class="chart-title">Tren Distribusi Nasional</div>
+                                        <button class="ai-icon-btn" onclick="app.analyzeData('nasionalDist')" title="AI Insight"><i class="fas fa-wand-magic-sparkles"></i></button>
+                                    </div>
+                                    <div class="btn-group">
+                                        <button class="btn-filter active f-urea" id="btn-nas-dist-urea" onclick="app.setChartProduct('UREA')">UREA</button>
+                                        <button class="btn-filter" id="btn-nas-dist-npk" onclick="app.setChartProduct('NPK')">NPK</button>
+                                    </div>
+                                </div>
+                                <div class="chart-canvas-container"><canvas id="chartNasionalDist"></canvas></div>
+                            </div>
+                            <div class="card-back">
+                                <button class="btn-back" onclick="app.flipCard('nasionalDist')"><i class="fas fa-arrow-left"></i> Kembali ke Grafik</button>
+                                <div id="ai-nasionalDist-content" class="ai-content"></div>
+                            </div>
+                        </div>
                     </div>
-                    <div id="list-others" class="rank-list"></div>
+                    
+                    <!-- Provinsi Chart DIST -->
+                    <div class="card-flip-container">
+                        <div class="card-flip-inner" id="flip-provinsiDist">
+                            <div class="card-front">
+                                <div class="chart-header">
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <div class="chart-title" id="prov-dist-chart-title">Distribusi Provinsi</div>
+                                        <button class="ai-icon-btn" onclick="app.analyzeData('provinsiDist')" title="AI Insight"><i class="fas fa-wand-magic-sparkles"></i></button>
+                                    </div>
+                                    <select class="custom-select" id="dropdown-provinsi-dist" onchange="app.renderDistProvChart()" style="min-width: 140px;"></select>
+                                </div>
+                                <div class="chart-canvas-container">
+                                    <canvas id="chartProvinsiDist"></canvas>
+                                    <div id="prov-dist-placeholder" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.4); color:var(--text-primary); border-radius:8px; backdrop-filter: blur(2px); display:none;">
+                                        <span style="background:var(--bg-body); padding:8px 16px; border-radius:20px; border:1px solid var(--border-color); font-size:12px;">
+                                            <i class="fas fa-arrow-up"></i> Pilih Provinsi
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-back">
+                                <button class="btn-back" onclick="app.flipCard('provinsiDist')"><i class="fas fa-arrow-left"></i> Kembali ke Grafik</button>
+                                <div id="ai-provinsiDist-content" class="ai-content"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ranking-grid">
+                    <div class="card">
+                        <div class="chart-header">
+                            <div class="chart-title big-icon">Top Distribusi</div>
+                            <i class="fas fa-truck-fast" style="color: var(--color-gold); font-size: 18px;"></i>
+                        </div>
+                        <div id="list-dist-top5" class="rank-list"></div>
+                    </div>
+                    <div class="card">
+                        <div class="chart-header">
+                            <div class="chart-title big-icon" style="color: var(--color-danger);">Lowest Distribusi</div>
+                            <i class="fas fa-exclamation-circle" style="color: var(--color-danger); font-size: 18px;"></i>
+                        </div>
+                        <div id="list-dist-others" class="rank-list"></div>
+                    </div>
                 </div>
             </div>
             
@@ -216,6 +712,7 @@
         </div> 
     </main>
 
+    <!-- LOGIN MODAL -->
     <div id="loginModal" class="modal-overlay">
         <div class="modal-box">
             <div class="modal-header">
@@ -229,6 +726,968 @@
         </div>
     </div>
 
-    <script src="js/script.js"></script>
+    <!-- JAVASCRIPT -->
+    <script>
+        Chart.defaults.color = '#b3b3b3';
+        Chart.defaults.borderColor = '#424242';
+        Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
+        Chart.defaults.font.size = 11;
+
+        const app = (() => {
+            // URL APP SCRIPT BARU
+            const API_URL = 'https://script.google.com/macros/s/AKfycbzAwrEIwiccjVaFD8wHqHjq_eqrihyeYunLX_5tgGONSo2qRDCFEXY3Uhe_WYBn7y4ZiQ/exec';
+            
+            const k_head = "AIzaSyDHe6hnE2k6L"; 
+            const k_tail = "pNeGQR13rKLOSwvW96p0m0"; 
+            const apiKey = k_head + k_tail; 
+
+            let state = {
+                rawData: [],
+                page: 'SALES', // 'SALES' or 'DISTRIBUSI'
+                sector: 'SUBSIDI',      
+                activeProduct: 'UREA',  
+                selectedYear: new Date().getFullYear(),
+                sidebarOpen: true,
+                theme: localStorage.getItem('theme') || 'dark',
+                isAdmin: false,
+                lastDataHash: localStorage.getItem('last_data_hash') || '',
+                lastUpdateDate: localStorage.getItem('last_update_date') || 'Overview Performa'
+            };
+
+            let charts = {
+                nasional: null,
+                provinsi: null,
+                nasionalDist: null,
+                provinsiDist: null
+            };
+            
+            let statsGlobal = null; 
+            let distStatsGlobal = null;
+            let infoAiData = [];
+
+            // --- UTILS ---
+            const parseIndoNumber = (str) => {
+                if (typeof str === 'number') return str;
+                if (!str) return 0;
+                let s = str.toString();
+                if (s.includes(';')) { s = s.replace(/\./g, '').replace(';', '.'); } 
+                else { s = s.replace(/\./g, '').replace(',', '.'); }
+                return parseFloat(s) || 0;
+            };
+
+            const formatNumber = (num) => new Intl.NumberFormat('id-ID').format(num);
+
+            const hexToRgbA = (hex, alpha) => {
+                let c; if(/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)){ c= hex.substring(1).split(''); if(c.length== 3){ c= [c[0], c[0], c[1], c[1], c[2], c[2]]; } c= '0x'+c.join(''); return 'rgba('+[(c>>16)&255, (c>>8)&255, c&255].join(',')+','+alpha+')'; } return hex;
+            }
+
+            const createDashedCircle = (color) => {
+                const size = 12; const r = 4.5; const c = document.createElement('canvas');
+                c.width = size; c.height = size; const ctx = c.getContext('2d');
+                ctx.beginPath(); ctx.setLineDash([2, 2]); ctx.lineWidth = 1.5;
+                ctx.strokeStyle = color; ctx.arc(size/2, size/2, r, 0, 2 * Math.PI); ctx.stroke();
+                return c;
+            };
+
+            const normalizeMonth = (str) => { const map = {'JAN':0, 'JANUARI':0, 'FEB':1, 'FEBRUARI':1, 'MAR':2, 'MARET':2, 'APR':3, 'APRIL':3, 'MEI':4, 'MAY':4, 'JUN':5, 'JUNI':5, 'JUL':6, 'JULI':6, 'AGU':7, 'AGUSTUS':7, 'SEP':8, 'SEPTEMBER':8, 'OKT':9, 'OKTOBER':9, 'NOV':10, 'NOVEMBER':10, 'DES':11, 'DESEMBER':11}; return map[String(str).toUpperCase().trim()] ?? -1; };
+            const toTitleCase = (str) => str.replace(/\w\S*/g, txt => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+
+            const toggleTheme = () => {
+                state.theme = state.theme === 'dark' ? 'light' : 'dark';
+                localStorage.setItem('theme', state.theme);
+                applyTheme(state.theme);
+                // We access updateDashboard later via declaration but here it's fine since it's user triggered
+                if (typeof updateDashboard === 'function') updateDashboard(); 
+            };
+
+            const applyTheme = (theme) => {
+                document.documentElement.setAttribute('data-theme', theme);
+                const icon = document.getElementById('theme-icon');
+                if(icon) {
+                    icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+                }
+                
+                if(theme === 'light') {
+                    Chart.defaults.color = '#1f2937';
+                    Chart.defaults.borderColor = '#e5e7eb';
+                } else {
+                    Chart.defaults.color = '#b3b3b3';
+                    Chart.defaults.borderColor = '#424242';
+                }
+            };
+
+            const populateProvDropdown = (id, provKeys) => {
+                const s = document.getElementById(id);
+                if(!s) return;
+                const prevVal = s.value; 
+                s.innerHTML = '';
+                const validKeys = provKeys.filter(p => p && p !== 'LAINNYA').sort();
+                if(validKeys.length > 0) {
+                    validKeys.forEach(prov => { let opt = document.createElement('option'); opt.value = prov; opt.innerText = prov; s.appendChild(opt); });
+                    s.value = (prevVal && validKeys.includes(prevVal)) ? prevVal : validKeys[0];
+                } else {
+                    let opt = document.createElement('option'); opt.value = ""; opt.innerText = "Tidak ada data"; s.appendChild(opt);
+                }
+            };
+
+            const renderSidebar = () => {
+                const sb = document.getElementById('sidebar');
+                const main = document.getElementById('main-content');
+                const overlay = document.getElementById('sidebar-overlay');
+                if (state.sidebarOpen) {
+                    sb.classList.remove('closed'); main.classList.remove('closed');
+                    if(window.innerWidth <= 768) { overlay.classList.add('show'); sb.style.transform = 'translateX(0)'; }
+                } else {
+                    sb.classList.add('closed'); main.classList.add('closed');
+                    if(window.innerWidth <= 768) { overlay.classList.remove('show'); sb.style.transform = 'translateX(-100%)'; }
+                }
+            };
+
+            // ==========================================
+            // RENDER FUNCTIONS (MOVED UP FOR SCOPE SAFETY)
+            // ==========================================
+
+            const renderNasionalChart = (nasStats) => {
+                const canvas = document.getElementById('chartNasional');
+                if(!canvas) return;
+                const ctx = canvas.getContext('2d');
+                if(charts.nasional) charts.nasional.destroy();
+
+                const isUrea = state.activeProduct === 'UREA';
+                const data = isUrea ? nasStats.UREA : nasStats.NPK;
+                const color = isUrea ? '#FFDE00' : '#38bdf8'; 
+                
+                const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+                gradient.addColorStop(0, hexToRgbA(color, 0.4));
+                gradient.addColorStop(1, hexToRgbA(color, 0.0));
+                
+                const targetIcon = createDashedCircle('#999'); 
+
+                charts.nasional = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'],
+                        datasets: [
+                            {
+                                label: 'Realisasi', data: data.real, borderColor: color, backgroundColor: gradient,
+                                fill: true, tension: 0.4, borderWidth: 3, 
+                                pointRadius: 4, pointHoverRadius: 6, pointStyle: 'circle', order: 1
+                            },
+                            {
+                                label: 'Alokasi', data: data.target, borderColor: '#666', borderDash: [6, 6],
+                                borderWidth: 2, fill: false, tension: 0.4, pointRadius: 0, pointStyle: targetIcon, order: 2 
+                            },
+                            {
+                                label: 'Stok', data: data.stock, type: 'bar', backgroundColor: '#616161', borderColor: '#616161',
+                                borderWidth: 0, barPercentage: 0.8, pointStyle: 'rect', order: 3
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: { 
+                            legend: { display: true, labels: { usePointStyle: true, pointStyle: 'rect', boxWidth: 8, padding: 20 } },
+                            tooltip: { backgroundColor: 'rgba(33, 33, 33, 0.95)', titleColor: '#ececec', bodyColor: '#b3b3b3', borderColor: '#424242', borderWidth: 1, callbacks: { label: (c) => c.dataset.label + ': ' + formatNumber(c.raw) } }
+                        },
+                        scales: { x: { grid: { display: false } }, y: { grid: { color: state.theme==='dark'?'#333':'#e5e7eb' }, beginAtZero: true, ticks: { maxTicksLimit: 5, callback: (v) => v===0?null:(v>=1000?(v/1000)+' rb':v) } } }
+                    }
+                });
+            };
+
+            const renderProvChart = () => {
+                const provName = document.getElementById('dropdown-provinsi').value;
+                const placeholder = document.getElementById('prov-placeholder');
+                const canvas = document.getElementById('chartProvinsi');
+                if(!canvas) return;
+                const ctx = canvas.getContext('2d');
+                
+                if (!provName) {
+                    if(placeholder) placeholder.style.display = 'flex';
+                    if(charts.provinsi) charts.provinsi.clear();
+                    return;
+                }
+                if(placeholder) placeholder.style.display = 'none';
+
+                let mReal = Array(12).fill(0);
+                let mTarget = Array(12).fill(0);
+                let mStock = Array(12).fill(0);
+
+                state.rawData.forEach(r => {
+                    if (r.TAHUN !== state.selectedYear || r.PROVINSI !== provName) return;
+                    let isSectorMatch = (state.sector === 'SUBSIDI') ? r.SEKTOR.includes('SUBSIDI') : r.SEKTOR.includes('RETAIL');
+                    if (!isSectorMatch) return;
+
+                    let prodKey = '';
+                    if (r.PRODUK.includes('UREA')) prodKey = 'UREA';
+                    else if (r.PRODUK.includes('NPK')) prodKey = 'NPK';
+                    
+                    if (prodKey !== state.activeProduct) return;
+
+                    if (r.BULAN >= 0) {
+                        if (r.KATEGORI === 'PENJUALAN' && r.JENIS === 'REALISASI') mReal[r.BULAN] += r.TONASE;
+                        else if (r.JENIS === 'ALOKASI' || r.JENIS === 'RKO') mTarget[r.BULAN] += r.TONASE;
+                        else if (r.JENIS.includes('STOK') || r.JENIS.includes('STOCK')) mStock[r.BULAN] += r.TONASE;
+                    }
+                });
+
+                if(charts.provinsi) charts.provinsi.destroy();
+                const colorMain = state.activeProduct === 'UREA' ? '#FFDE00' : '#38bdf8';
+                
+                const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+                gradient.addColorStop(0, hexToRgbA(colorMain, 0.4));
+                gradient.addColorStop(1, hexToRgbA(colorMain, 0.0));
+
+                const targetIcon = createDashedCircle('#999');
+
+                charts.provinsi = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'],
+                        datasets: [
+                            {
+                                label: 'Realisasi', data: mReal, borderColor: colorMain, backgroundColor: gradient,
+                                fill: true, tension: 0.4, borderWidth: 3, pointRadius: 4, pointHoverRadius: 6, pointStyle: 'circle', order: 1
+                            },
+                            {
+                                label: 'Alokasi', data: mTarget, borderColor: '#666', borderDash: [6, 6], borderWidth: 2, fill: false, tension: 0.4, pointRadius: 0, pointStyle: targetIcon, order: 2
+                            },
+                            {
+                                label: 'Stok', data: mStock, type: 'bar', backgroundColor: '#616161', borderColor: '#616161', borderWidth: 0, barPercentage: 0.8, pointStyle: 'rect', order: 3
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: { 
+                            legend: { display: true, labels: { usePointStyle: true, pointStyle: 'rect', boxWidth: 8, padding: 20 } },
+                            tooltip: { backgroundColor: 'rgba(33, 33, 33, 0.95)', titleColor: '#ececec', bodyColor: '#b3b3b3', borderColor: '#424242', borderWidth: 1, callbacks: { label: (c) => c.dataset.label + ': ' + formatNumber(c.raw) } }
+                        },
+                        scales: { x: { grid: { display: false } }, y: { grid: { color: state.theme==='dark'?'#333':'#e5e7eb' }, beginAtZero: true } }
+                    }
+                });
+            };
+
+            const renderNasionalDistChart = (nasStats) => {
+                const canvas = document.getElementById('chartNasionalDist');
+                if(!canvas) return;
+                const ctx = canvas.getContext('2d');
+                if(charts.nasionalDist) charts.nasionalDist.destroy();
+
+                const isUrea = state.activeProduct === 'UREA';
+                const data = isUrea ? nasStats.UREA : nasStats.NPK;
+                const color = isUrea ? '#FFDE00' : '#38bdf8'; 
+                
+                // Colors for stack
+                const colorTruck = isUrea ? '#f59e0b' : '#0ea5e9'; // Amber vs Sky
+                const colorKapal = isUrea ? '#fcd34d' : '#7dd3fc'; // Light Amber vs Light Sky
+
+                charts.nasionalDist = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'],
+                        datasets: [
+                            {
+                                label: 'Truk (Inbag)', data: data.land, backgroundColor: colorTruck, stack: 'stack1', order: 2
+                            },
+                            {
+                                label: 'Kapal (Curah+Inbag)', data: data.sea, backgroundColor: colorKapal, stack: 'stack1', order: 3
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: { 
+                            legend: { display: true, labels: { usePointStyle: true, pointStyle: 'rect', boxWidth: 8, padding: 20 } },
+                            tooltip: { backgroundColor: 'rgba(33, 33, 33, 0.95)', titleColor: '#ececec', bodyColor: '#b3b3b3', borderColor: '#424242', borderWidth: 1, callbacks: { label: (c) => c.dataset.label + ': ' + formatNumber(c.raw) } }
+                        },
+                        scales: { 
+                            x: { grid: { display: false }, stacked: true }, 
+                            y: { grid: { color: state.theme==='dark'?'#333':'#e5e7eb' }, beginAtZero: true, stacked: true, ticks: { maxTicksLimit: 5, callback: (v) => v===0?null:(v>=1000?(v/1000)+' rb':v) } } 
+                        }
+                    }
+                });
+            };
+
+            const renderDistProvChart = () => {
+                const provName = document.getElementById('dropdown-provinsi-dist').value;
+                const placeholder = document.getElementById('prov-dist-placeholder');
+                const canvas = document.getElementById('chartProvinsiDist');
+                if(!canvas) return;
+                const ctx = canvas.getContext('2d');
+                
+                if (!provName) {
+                    if(placeholder) placeholder.style.display = 'flex';
+                    if(charts.provinsiDist) charts.provinsiDist.clear();
+                    return;
+                }
+                if(placeholder) placeholder.style.display = 'none';
+
+                let mLand = Array(12).fill(0);
+                let mSea = Array(12).fill(0);
+
+                // Calculate for specific province
+                state.rawData.forEach(r => {
+                    if (r.TAHUN !== state.selectedYear || r.PROVINSI !== provName) return;
+                    let isSectorMatch = (state.sector === 'SUBSIDI') ? r.SEKTOR.includes('SUBSIDI') : r.SEKTOR.includes('RETAIL');
+                    if (!isSectorMatch) return;
+
+                    let prodKey = '';
+                    if (r.PRODUK.includes('UREA')) prodKey = 'UREA';
+                    else if (r.PRODUK.includes('NPK')) prodKey = 'NPK';
+                    if (prodKey !== state.activeProduct) return;
+
+                    if (r.BULAN >= 0) {
+                        // Distribution Realization
+                        if (r.JENIS === 'REALISASI DISTRIBUSI') {
+                             if (r.KATEGORI && (r.KATEGORI.includes('TRUCK') || r.KATEGORI.includes('DARAT'))) mLand[r.BULAN] += r.TONASE;
+                             else if (r.KATEGORI && (r.KATEGORI.includes('KAPAL') || r.KATEGORI.includes('LAUT'))) mSea[r.BULAN] += r.TONASE;
+                        }
+                    }
+                });
+
+                if(charts.provinsiDist) charts.provinsiDist.destroy();
+                const isUrea = state.activeProduct === 'UREA';
+                const colorTruck = isUrea ? '#f59e0b' : '#0ea5e9'; 
+                const colorKapal = isUrea ? '#fcd34d' : '#7dd3fc';
+
+                charts.provinsiDist = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'],
+                        datasets: [
+                            {
+                                label: 'Truk (Inbag)', data: mLand, backgroundColor: colorTruck, stack: 'stack1', order: 2
+                            },
+                            {
+                                label: 'Kapal (Curah+Inbag)', data: mSea, backgroundColor: colorKapal, stack: 'stack1', order: 3
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: { 
+                            legend: { display: true, labels: { usePointStyle: true, pointStyle: 'rect', boxWidth: 8, padding: 20 } },
+                            tooltip: { backgroundColor: 'rgba(33, 33, 33, 0.95)', titleColor: '#ececec', bodyColor: '#b3b3b3', borderColor: '#424242', borderWidth: 1, callbacks: { label: (c) => c.dataset.label + ': ' + formatNumber(c.raw) } }
+                        },
+                        scales: { x: { grid: { display: false }, stacked: true }, y: { grid: { color: state.theme==='dark'?'#333':'#e5e7eb' }, beginAtZero: true, stacked: true } }
+                    }
+                });
+            };
+
+            const renderSalesRankings = (provData) => {
+                let arr = Object.keys(provData).map(key => {
+                    const item = provData[key];
+                    let sortVal = 0, displayVal = '';
+                    if (state.sector === 'SUBSIDI') {
+                        sortVal = item.target > 0 ? (item.real / item.target) * 100 : 0;
+                        displayVal = sortVal.toFixed(1) + '%';
+                    } else {
+                        sortVal = item.real;
+                        displayVal = formatNumber(item.real);
+                    }
+                    return { name: key, val: sortVal, display: displayVal, rawReal: item.real };
+                });
+
+                let activeData = arr.filter(item => item.rawReal > 0);
+                activeData.sort((a,b) => b.val - a.val);
+
+                const listBest = document.getElementById('list-top5');
+                const listWarn = document.getElementById('list-others');
+                
+                if(listBest) {
+                    const top5 = activeData.slice(0, 5);
+                    if(top5.length === 0) listBest.innerHTML = '<div style="padding:15px;text-align:center;color:grey;font-size:12px;">Data Kosong</div>';
+                    else listBest.innerHTML = top5.map((item, i) => {
+                        let colorClass = ''; let medalIcon = '';
+                        if(i===0) { colorClass='gold'; medalIcon='<i class="fas fa-medal" style="color:var(--color-gold); font-size:14px;"></i>'; }
+                        else if(i===1) { colorClass='silver'; medalIcon='<i class="fas fa-medal" style="color:var(--color-silver); font-size:14px;"></i>'; }
+                        else if(i===2) { colorClass='bronze'; medalIcon='<i class="fas fa-medal" style="color:var(--color-bronze); font-size:14px;"></i>'; }
+                        
+                        let numberHtml = medalIcon ? `<div class="rank-num medal-box">${medalIcon}</div>` : `<div class="rank-num best">${i+1}</div>`;
+
+                        return `<div class="rank-item"><div class="rank-left">${numberHtml}<div class="rank-name ${colorClass}">${item.name}</div></div><div class="rank-val val-best">${item.display}</div></div>`;
+                    }).join('');
+                }
+
+                if(listWarn) {
+                    const others = activeData.slice(5).sort((a,b) => a.val - b.val).slice(0, 5);
+                    if(others.length === 0) listWarn.innerHTML = '<div style="padding:15px;text-align:center;color:grey;font-size:12px;">Data Kosong</div>';
+                    else listWarn.innerHTML = others.map((item, i) => `<div class="rank-item"><div class="rank-left"><div class="rank-num warn">${i+1}</div><div class="rank-name">${item.name}</div></div><div class="rank-val val-warn">${item.display}</div></div>`).join('');
+                }
+            };
+
+            const renderDistRankings = (provData) => {
+                let arr = Object.keys(provData).map(key => {
+                    const item = provData[key];
+                    let sortVal = item.real;
+                    let displayVal = formatNumber(item.real);
+                    return { name: key, val: sortVal, display: displayVal };
+                });
+
+                let activeData = arr.filter(item => item.val > 0);
+                activeData.sort((a,b) => b.val - a.val);
+
+                const listBest = document.getElementById('list-dist-top5');
+                const listWarn = document.getElementById('list-dist-others');
+                
+                if(listBest) {
+                    const top5 = activeData.slice(0, 5);
+                    if(top5.length === 0) listBest.innerHTML = '<div style="padding:15px;text-align:center;color:grey;font-size:12px;">Data Kosong</div>';
+                    else listBest.innerHTML = top5.map((item, i) => {
+                        let colorClass = ''; let medalIcon = '';
+                        if(i===0) { colorClass='gold'; medalIcon='<i class="fas fa-medal" style="color:var(--color-gold); font-size:14px;"></i>'; }
+                        else if(i===1) { colorClass='silver'; medalIcon='<i class="fas fa-medal" style="color:var(--color-silver); font-size:14px;"></i>'; }
+                        else if(i===2) { colorClass='bronze'; medalIcon='<i class="fas fa-medal" style="color:var(--color-bronze); font-size:14px;"></i>'; }
+                        
+                        let numberHtml = medalIcon ? `<div class="rank-num medal-box">${medalIcon}</div>` : `<div class="rank-num best">${i+1}</div>`;
+                        return `<div class="rank-item"><div class="rank-left">${numberHtml}<div class="rank-name ${colorClass}">${item.name}</div></div><div class="rank-val val-best">${item.display}</div></div>`;
+                    }).join('');
+                }
+
+                if(listWarn) {
+                    const others = activeData.slice(5).sort((a,b) => a.val - b.val).slice(0, 5);
+                    if(others.length === 0) listWarn.innerHTML = '<div style="padding:15px;text-align:center;color:grey;font-size:12px;">Data Kosong</div>';
+                    else listWarn.innerHTML = others.map((item, i) => `<div class="rank-item"><div class="rank-left"><div class="rank-num warn">${i+1}</div><div class="rank-name">${item.name}</div></div><div class="rank-val val-warn">${item.display}</div></div>`).join('');
+                }
+            };
+
+            const renderSalesKPI = (stats) => {
+                const fmt = (n) => formatNumber(n);
+                const updateCard = (key) => {
+                    const real = stats.curr[key].real;
+                    const target = stats.curr[key].target;
+                    const prev = stats.prev[key].real;
+                    const keyL = key.toLowerCase();
+                    const pct = target > 0 ? (real / target * 100) : 0;
+                    
+                    document.getElementById(`val-${keyL}-real`).innerText = fmt(real);
+                    document.getElementById(`val-${keyL}-pct`).innerText = pct.toFixed(0) + '%'; 
+                    document.getElementById(`prog-${keyL}`).style.width = Math.min(pct, 100) + '%';
+                    document.getElementById(`val-${keyL}-target`).innerText = fmt(target);
+
+                    const elRowSisa = document.getElementById(`row-${keyL}-sisa`);
+                    const sisa = target - real;
+                    if (sisa <= 0) {
+                        elRowSisa.innerHTML = '<i class="fas fa-check-circle"></i> Tercapai';
+                        elRowSisa.style.color = 'var(--color-success)'; 
+                    } else {
+                        elRowSisa.innerHTML = `Sisa Alokasi: <span id="val-${keyL}-sisa">${fmt(sisa)}</span>`;
+                        elRowSisa.style.color = 'var(--color-danger)'; 
+                    }
+
+                    // Growth
+                    let growth = 0; let isUp = true;
+                    if(prev > 0) { growth = ((real - prev) / prev) * 100; isUp = growth >= 0; } 
+                    else if (real > 0) { growth = 100; }
+                    
+                    const elGrowthVal = document.getElementById(`growth-${keyL}-val`);
+                    const sign = growth > 0 ? '+' : '';
+                    elGrowthVal.innerText = sign + growth.toFixed(1) + '%';
+                    elGrowthVal.style.color = isUp ? 'var(--color-success)' : 'var(--color-danger)';
+
+                    document.getElementById(`year-curr-${keyL}`).innerText = state.selectedYear;
+                    document.getElementById(`val-${keyL}-curr`).innerText = fmt(real);
+                    document.getElementById(`year-prev-${keyL}`).innerText = state.selectedYear - 1;
+                    document.getElementById(`val-${keyL}-prev`).innerText = fmt(prev);
+                };
+                updateCard('UREA');
+                updateCard('NPK');
+            };
+
+            const renderDistKPI = (stats) => {
+                const fmt = (n) => formatNumber(n);
+                const updateCard = (key) => {
+                    const real = stats.curr[key].real;
+                    const details = stats.details[key];
+                    const prev = stats.prev[key].real;
+                    const keyL = key.toLowerCase();
+                    
+                    document.getElementById(`val-dist-${keyL}-real`).innerText = fmt(real);
+                    
+                    // Populate Split View
+                    document.getElementById(`val-dist-${keyL}-inbag`).innerText = fmt(details.bag);
+                    document.getElementById(`val-dist-${keyL}-curah`).innerText = fmt(details.bulk);
+                    document.getElementById(`val-dist-${keyL}-truck`).innerText = fmt(details.land);
+                    document.getElementById(`val-dist-${keyL}-kapal`).innerText = fmt(details.sea);
+
+                    // Growth
+                    let growth = 0; let isUp = true;
+                    if(prev > 0) { growth = ((real - prev) / prev) * 100; isUp = growth >= 0; } 
+                    else if (real > 0) { growth = 100; }
+                    
+                    const elGrowthVal = document.getElementById(`growth-dist-${keyL}-val`);
+                    const sign = growth > 0 ? '+' : '';
+                    elGrowthVal.innerText = sign + growth.toFixed(1) + '%';
+                    elGrowthVal.style.color = isUp ? 'var(--color-success)' : 'var(--color-danger)';
+
+                    document.getElementById(`year-curr-dist-${keyL}`).innerText = state.selectedYear;
+                    document.getElementById(`val-dist-${keyL}-curr`).innerText = fmt(real);
+                    document.getElementById(`year-prev-dist-${keyL}`).innerText = state.selectedYear - 1;
+                    document.getElementById(`val-dist-${keyL}-prev`).innerText = fmt(prev);
+                };
+                updateCard('UREA');
+                updateCard('NPK');
+            };
+
+            // ==========================================
+            // DATA PROCESSING FUNCTIONS (CALL RENDERERS)
+            // ==========================================
+
+            const processSalesData = () => {
+                const { rawData, selectedYear, sector, activeProduct } = state;
+                
+                let stats = {
+                    curr: { UREA: {real:0, target:0}, NPK: {real:0, target:0} },
+                    prev: { UREA: {real:0}, NPK: {real:0} },
+                    nasional: { 
+                        UREA: {real:Array(12).fill(0), target:Array(12).fill(0), stock:Array(12).fill(0)}, 
+                        NPK: {real:Array(12).fill(0), target:Array(12).fill(0), stock:Array(12).fill(0)} 
+                    },
+                    provinsi: {} 
+                };
+
+                const dropdownProvs = new Set();
+
+                rawData.forEach(r => {
+                    // Filter Sektor Sales
+                    let isSectorMatch = (sector === 'SUBSIDI') ? 
+                        (r.SEKTOR.includes('SUBSIDI')) : (r.SEKTOR.includes('RETAIL')); 
+                    if (!isSectorMatch) return;
+
+                    // Filter Produk
+                    let prodKey = '';
+                    if (r.PRODUK.includes('UREA') || r.PRODUK.includes('NITREA')) prodKey = 'UREA';
+                    else if (r.PRODUK.includes('NPK') || r.PRODUK.includes('PHONSKA')) prodKey = 'NPK';
+                    if (!prodKey) return;
+
+                    // Jenis Data
+                    let isReal = (r.KATEGORI === 'PENJUALAN' && r.JENIS === 'REALISASI');
+                    let isTarget = r.JENIS === 'ALOKASI' || r.JENIS === 'RKO'; 
+                    let isStock = r.JENIS.includes('STOK') || r.JENIS.includes('STOCK') || r.JENIS.includes('AKTUAL');
+
+                    // Data Tahun Ini
+                    if (r.TAHUN === selectedYear) {
+                        if (isReal) {
+                            stats.curr[prodKey].real += r.TONASE;
+                            if(r.BULAN >= 0) stats.nasional[prodKey].real[r.BULAN] += r.TONASE;
+                            
+                            // Provinsi Aggregation
+                            if (prodKey === activeProduct) {
+                                if(r.PROVINSI && r.PROVINSI !== 'LAINNYA') dropdownProvs.add(r.PROVINSI);
+                                if (!stats.provinsi[r.PROVINSI]) stats.provinsi[r.PROVINSI] = { real: 0, target: 0 };
+                                stats.provinsi[r.PROVINSI].real += r.TONASE;
+                            }
+                        } else if (isTarget) {
+                            stats.curr[prodKey].target += r.TONASE;
+                            if(r.BULAN >= 0) stats.nasional[prodKey].target[r.BULAN] += r.TONASE;
+                             if (prodKey === activeProduct) {
+                                if (!stats.provinsi[r.PROVINSI]) stats.provinsi[r.PROVINSI] = { real: 0, target: 0 };
+                                stats.provinsi[r.PROVINSI].target += r.TONASE;
+                            }
+                        } else if (isStock) {
+                            if(r.BULAN >= 0) stats.nasional[prodKey].stock[r.BULAN] += r.TONASE;
+                        }
+                    }
+                    // Data Tahun Lalu (YoY)
+                    if (r.TAHUN === (selectedYear - 1) && isReal) {
+                        stats.prev[prodKey].real += r.TONASE;
+                    }
+                });
+
+                if(state.page === 'SALES') {
+                    populateProvDropdown('dropdown-provinsi', [...dropdownProvs]);
+                    renderSalesKPI(stats);
+                    renderSalesRankings(stats.provinsi);
+                    renderNasionalChart(stats.nasional);
+                    renderProvChart(); 
+                }
+                
+                // Store globally for Distribution use
+                statsGlobal = stats;
+            };
+
+            const processDistributionData = () => {
+                const { rawData, selectedYear, sector, activeProduct } = state;
+                
+                // Init Stats Dist
+                let distStats = {
+                    curr: { UREA: {real:0}, NPK: {real:0} }, 
+                    prev: { UREA: {real:0}, NPK: {real:0} },
+                    details: {
+                        UREA: { bag: 0, bulk: 0, land: 0, sea: 0 },
+                        NPK: { bag: 0, bulk: 0, land: 0, sea: 0 }
+                    },
+                    nasional: { 
+                        UREA: {real:Array(12).fill(0), target:Array(12).fill(0), land:Array(12).fill(0), sea:Array(12).fill(0)}, 
+                        NPK: {real:Array(12).fill(0), target:Array(12).fill(0), land:Array(12).fill(0), sea:Array(12).fill(0)} 
+                    },
+                    provinsi: {}
+                };
+                
+                // Use Targets from Sales Stats if available
+                if (statsGlobal) {
+                    distStats.nasional.UREA.target = statsGlobal.nasional.UREA.target;
+                    distStats.nasional.NPK.target = statsGlobal.nasional.NPK.target;
+                }
+
+                const dropdownProvs = new Set();
+
+                rawData.forEach(r => {
+                    let isSectorMatch = (sector === 'SUBSIDI') ? 
+                        (r.SEKTOR.includes('SUBSIDI')) : (r.SEKTOR.includes('RETAIL')); 
+                    if (!isSectorMatch) return;
+
+                    let prodKey = '';
+                    if (r.PRODUK.includes('UREA')) prodKey = 'UREA';
+                    else if (r.PRODUK.includes('NPK')) prodKey = 'NPK';
+                    if (!prodKey) return;
+
+                    // UPDATED: Distribution Filter using JENIS "REALISASI DISTRIBUSI"
+                    if (r.JENIS !== 'REALISASI DISTRIBUSI') return;
+
+                    const val = r.TONASE;
+
+                    if (r.TAHUN === selectedYear) {
+                        distStats.curr[prodKey].real += val;
+                        
+                        if(r.BULAN >= 0) {
+                            distStats.nasional[prodKey].real[r.BULAN] += val;
+                            if (r.KATEGORI && (r.KATEGORI.includes('TRUCK') || r.KATEGORI.includes('DARAT'))) distStats.nasional[prodKey].land[r.BULAN] += val;
+                            else if (r.KATEGORI && (r.KATEGORI.includes('KAPAL') || r.KATEGORI.includes('LAUT'))) distStats.nasional[prodKey].sea[r.BULAN] += val;
+                        }
+
+                        // Breakdown Logic (Updated to match sample data)
+                        if (r.MATERIAL && (r.MATERIAL.includes('INBAG') || r.MATERIAL.includes('ZAK'))) distStats.details[prodKey].bag += val;
+                        else if (r.MATERIAL && (r.MATERIAL.includes('CURAH') || r.MATERIAL.includes('BULK'))) distStats.details[prodKey].bulk += val;
+
+                        if (r.KATEGORI && (r.KATEGORI.includes('TRUCK') || r.KATEGORI.includes('DARAT'))) distStats.details[prodKey].land += val;
+                        else if (r.KATEGORI && (r.KATEGORI.includes('KAPAL') || r.KATEGORI.includes('LAUT'))) distStats.details[prodKey].sea += val;
+
+                        if (prodKey === activeProduct) {
+                            if(r.PROVINSI && r.PROVINSI !== 'LAINNYA') dropdownProvs.add(r.PROVINSI);
+                            if (!distStats.provinsi[r.PROVINSI]) distStats.provinsi[r.PROVINSI] = { real: 0, target: 0 };
+                            distStats.provinsi[r.PROVINSI].real += val;
+                        }
+                    }
+                    
+                    if (r.TAHUN === (selectedYear - 1)) {
+                        distStats.prev[prodKey].real += val;
+                    }
+                });
+
+                if (statsGlobal) {
+                    Object.keys(statsGlobal.provinsi).forEach(prov => {
+                    if (!distStats.provinsi[prov] && (sector === 'SUBSIDI' || sector === 'RETAIL')) {
+                        if (statsGlobal.provinsi[prov].target > 0) {
+                            distStats.provinsi[prov] = { real: 0, target: 0 };
+                            dropdownProvs.add(prov);
+                        }
+                    }
+                    if (distStats.provinsi[prov]) {
+                        distStats.provinsi[prov].target = statsGlobal.provinsi[prov].target;
+                    }
+                    });
+                }
+
+                distStatsGlobal = distStats;
+                populateProvDropdown('dropdown-provinsi-dist', [...dropdownProvs]);
+                
+                renderDistKPI(distStats);
+                renderDistRankings(distStats.provinsi);
+                renderNasionalDistChart(distStats.nasional);
+                renderDistProvChart();
+            };
+
+            const updateDashboard = () => {
+                const { page } = state;
+                
+                document.getElementById('view-sales').style.display = page === 'SALES' ? 'block' : 'none';
+                document.getElementById('view-distribution').style.display = page === 'DISTRIBUSI' ? 'block' : 'none';
+
+                processSalesData();
+                if (page === 'DISTRIBUSI') {
+                    processDistributionData();
+                }
+            };
+
+            const init = () => { 
+                applyTheme(state.theme);
+                if(state.lastUpdateDate) {
+                    const headerText = document.getElementById('header-update-text');
+                    if(headerText) headerText.innerText = state.lastUpdateDate;
+                }
+                fetchData(); 
+                checkScreenSize(); 
+            };
+
+            const fetchData = async () => {
+                document.getElementById('loader').style.display = 'flex';
+                setTimeout(() => { if(document.getElementById('loader')) document.getElementById('loader').style.display = 'none'; }, 10000);
+
+                try {
+                    const res = await fetch(API_URL);
+                    const data = await res.json();
+                    if (!Array.isArray(data)) throw new Error("Format data salah");
+                    
+                    const currentHash = JSON.stringify(data).length + "_" + data.length;
+                    if (currentHash !== state.lastDataHash) {
+                        const now = new Date();
+                        const formattedDate = `Update: ${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+                        state.lastUpdateDate = formattedDate;
+                        state.lastDataHash = currentHash;
+                        localStorage.setItem('last_update_date', formattedDate);
+                        localStorage.setItem('last_data_hash', currentHash);
+                        const headerText = document.getElementById('header-update-text');
+                        if(headerText) headerText.innerText = formattedDate;
+                    } else {
+                         const headerText = document.getElementById('header-update-text');
+                         if(headerText) headerText.innerText = state.lastUpdateDate;
+                    }
+
+                    // --- NEW: EXTRACT INFO_AI DATA ---
+                    // Assuming the API returns info_ai as part of the JSON response or mixed in
+                    // If your API returns mixed rows, we filter them here.
+                    // Based on your AppScript, info_ai rows should have specific columns.
+                    // Let's filter them out into a separate state variable.
+                    
+                    const salesDistData = [];
+                    const aiData = [];
+
+                    data.forEach(row => {
+                        // Check if row belongs to info_ai based on columns
+                        if (row.INFORMASI && row.KATEGORI_AI) { // Assuming these keys exist from AppScript
+                             aiData.push(row);
+                        } else {
+                             salesDistData.push(row);
+                        }
+                    });
+
+                    infoAiData = aiData; // Store globally
+                    processData(salesDistData); // Process main data
+
+                } catch (err) {
+                    console.error("Fetch Error:", err);
+                    alert("Gagal mengambil data: " + err.message);
+                } finally {
+                    if(document.getElementById('loader')) document.getElementById('loader').style.display = 'none';
+                }
+            };
+
+            const processData = (data) => {
+                state.rawData = data.map(row => ({
+                    TAHUN: parseInt(row.TAHUN) || 0,
+                    BULAN: normalizeMonth(row.BULAN),
+                    SEKTOR: String(row.SEKTOR || '').toUpperCase(),
+                    PRODUK: String(row.PRODUK || '').toUpperCase(),
+                    JENIS: String(row.JENIS || '').toUpperCase(),
+                    // Perbaikan Mapping: Menggunakan kolom header dari JSON sampel 
+                    KATEGORI: String(row.KATEGORI || '').toUpperCase(), // Digunakan sbg Moda/Kategori di sheet Dist
+                    MATERIAL: String(row.MATERIAL || '').toUpperCase(), // Digunakan sbg Kemasan/Material di sheet Dist
+                    KEMASAN: String(row.KEMASAN || '').toUpperCase(), 
+                    MODA: String(row.MODA || '').toUpperCase(), 
+                    PROVINSI: toTitleCase(String(row.PROVINSI || '')),
+                    TONASE: parseIndoNumber(row.TONASE)
+                }));
+
+                const years = [...new Set(state.rawData.map(r => r.TAHUN))].sort((a,b) => b-a);
+                const yearSel = document.getElementById('year-select');
+                if (yearSel) {
+                    yearSel.innerHTML = '';
+                    years.forEach(y => {
+                        let opt = document.createElement('option');
+                        opt.value = y; opt.text = y;
+                        if(y === state.selectedYear) opt.selected = true;
+                        yearSel.appendChild(opt);
+                    });
+                    if(!years.includes(state.selectedYear) && years.length > 0) state.selectedYear = years[0];
+                }
+
+                updateDashboard(); 
+            };
+
+            // AI Analyze Helper
+            const analyzeData = async (type) => {
+                const flipInner = document.getElementById(`flip-${type}`);
+                const content = document.getElementById(`ai-${type}-content`);
+                
+                flipInner.classList.add('flipped');
+                content.innerHTML = '<div style="margin-top:60px; text-align:center; color:var(--text-secondary);"><i class="fas fa-circle-notch fa-spin fa-2x"></i><br><span style="font-size:12px; margin-top:10px; display:block;">Menyiapkan insight...</span></div>';
+
+                let ctxData = "";
+                const prod = state.activeProduct; const sec = state.sector; const year = state.selectedYear;
+                
+                // 1. Get Quantitative Data Context
+                if (type === 'nasional') {
+                    const d = prod === 'UREA' ? statsGlobal.nasional.UREA : statsGlobal.nasional.NPK;
+                    const totalReal = d.real.reduce((a,b)=>a+b,0);
+                    const totalTarget = d.target.reduce((a,b)=>a+b,0);
+                    const pct = totalTarget > 0 ? (totalReal/totalTarget*100).toFixed(1) : 0;
+                    ctxData = `DATA: Nasional, Produk ${prod}, Sektor ${sec}, Tahun ${year}. Realisasi: ${formatNumber(totalReal)} Ton. Alokasi: ${formatNumber(totalTarget)} Ton. Capaian: ${pct}%.`;
+                } else if (type === 'nasionalDist') {
+                    const d = prod === 'UREA' ? distStatsGlobal.nasional.UREA : distStatsGlobal.nasional.NPK;
+                    const totalReal = d.real.reduce((a,b)=>a+b,0);
+                    const totalTarget = d.target.reduce((a,b)=>a+b,0);
+                    const pct = totalTarget > 0 ? (totalReal/totalTarget*100).toFixed(1) : 0;
+                    ctxData = `DATA: Distribusi Nasional, Produk ${prod}, Sektor ${sec}, Tahun ${year}. Realisasi Distribusi: ${formatNumber(totalReal)} Ton. Target Sales: ${formatNumber(totalTarget)} Ton. Capaian: ${pct}%.`;
+                } else if (type.includes('provinsi')) {
+                    const isDist = type.includes('Dist');
+                    const dropdownId = isDist ? 'dropdown-provinsi-dist' : 'dropdown-provinsi';
+                    const provName = document.getElementById(dropdownId).value;
+                    const statsSource = isDist ? distStatsGlobal : statsGlobal;
+                    
+                    if(!statsSource.provinsi[provName]) { content.innerHTML = "<p>Data Kosong</p>"; return; }
+                    const pData = statsSource.provinsi[provName];
+                    const pct = pData.target > 0 ? (pData.real/pData.target*100).toFixed(1) : 0;
+                    const label = isDist ? 'Distribusi' : 'Penjualan';
+                    ctxData = `DATA: ${label} Provinsi ${provName}, Produk ${prod}, Sektor ${sec}, Tahun ${year}. Realisasi: ${formatNumber(pData.real)} Ton. Alokasi: ${formatNumber(pData.target)} Ton. Capaian: ${pct}%.`;
+                }
+
+                // 2. Get Qualitative Context from INFO_AI
+                // Filter infoAiData based on context
+                let relevantInfo = infoAiData.filter(item => {
+                    // Normalize inputs
+                    const iYear = parseInt(item.TAHUN);
+                    const iSektor = item.SEKTOR ? item.SEKTOR.toUpperCase() : 'SEMUA';
+                    const iProduk = item.PRODUK ? item.PRODUK.toUpperCase() : 'SEMUA';
+                    const iProv = item.PROVINSI ? toTitleCase(item.PROVINSI) : 'SEMUA';
+                    const iStatus = item.STATUS ? item.STATUS.toUpperCase() : 'AKTIF';
+
+                    if (iStatus !== 'AKTIF') return false;
+                    if (iYear !== year) return false;
+                    
+                    // Logic: "SEMUA" matches everything, otherwise exact match
+                    const matchSektor = (iSektor === 'SEMUA' || iSektor === sec);
+                    const matchProduk = (iProduk === 'SEMUA' || iProduk === prod);
+                    
+                    // Province matching depends on context type
+                    let matchProv = true;
+                    if (type.includes('provinsi')) {
+                         const currentProv = document.getElementById(type.includes('Dist') ? 'dropdown-provinsi-dist' : 'dropdown-provinsi').value;
+                         matchProv = (iProv === 'SEMUA' || iProv === currentProv);
+                    } else {
+                         // For Nasional charts, we include National news ('SEMUA' province) or maybe major issues
+                         matchProv = (iProv === 'SEMUA'); 
+                    }
+
+                    return matchSektor && matchProduk && matchProv;
+                });
+
+                // Format relevant info for prompt
+                let contextString = "";
+                if (relevantInfo.length > 0) {
+                    contextString = "\n\nFAKTOR EKSTERNAL (INFO TERKINI):";
+                    relevantInfo.forEach(info => {
+                        contextString += `\n- [${info.KATEGORI_AI}] ${info.INFORMASI}`;
+                    });
+                }
+
+                const promptText = `
+                    Peran: Senior Data Analyst.
+                    Konteks Data Kuantitatif: ${ctxData}
+                    ${contextString}
+                    
+                    Tugas: Berikan Executive Summary super ringkas (Max 3 poin). 
+                    Jika ada Faktor Eksternal yang relevan, HUBUNGKAN dengan performa data kuantitatif.
+                    Contoh: "Realisasi rendah kemungkinan disebabkan oleh [Info Cuaca]..."
+                    
+                    Format Output (HTML Murni tanpa markdown, gunakan bullet points <ul><li>...</li></ul>):
+                `;
+
+                try {
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
+                    });
+                    const result = await response.json();
+                    let cleanText = result.candidates[0].content.parts[0].text.replace(/```html/g, '').replace(/```/g, '').trim();
+                    content.innerHTML = `<div style="padding-top:10px;">${cleanText}</div>`;
+                } catch (e) {
+                    console.error(e);
+                    content.innerHTML = `<p>Gagal memuat AI.</p>`;
+                }
+            };
+
+            const flipCard = (type) => { document.getElementById(`flip-${type}`).classList.remove('flipped'); };
+
+            // Public Methods
+            return {
+                init,
+                toggleSidebar: () => { state.sidebarOpen = !state.sidebarOpen; renderSidebar(); },
+                toggleTheme,
+                
+                navigate: (pageType, sectorType) => {
+                    state.page = pageType;
+                    state.sector = sectorType;
+                    
+                    document.getElementById('nav-sales-subsidi').classList.remove('active');
+                    document.getElementById('nav-sales-retail').classList.remove('active');
+                    document.getElementById('nav-dist-subsidi').classList.remove('active');
+                    document.getElementById('nav-dist-retail').classList.remove('active');
+                    
+                    let activeId = '';
+                    let titlePrefix = '';
+                    
+                    if (pageType === 'SALES') {
+                        if (sectorType === 'SUBSIDI') activeId = 'nav-sales-subsidi';
+                        else activeId = 'nav-sales-retail';
+                        titlePrefix = 'Penjualan';
+                    } else {
+                        if (sectorType === 'SUBSIDI') activeId = 'nav-dist-subsidi';
+                        else activeId = 'nav-dist-retail';
+                        titlePrefix = 'Distribusi';
+                    }
+                    
+                    if(activeId) document.getElementById(activeId).classList.add('active');
+                    
+                    const sectorLabel = sectorType === 'SUBSIDI' ? 'Subsidi' : 'Retail';
+                    document.getElementById('page-title-text').innerText = `${titlePrefix} ${sectorLabel}`;
+
+                    updateDashboard();
+                    if(window.innerWidth <= 768) { state.sidebarOpen = false; renderSidebar(); }
+                },
+
+                changeYear: (val) => { state.selectedYear = parseInt(val); updateDashboard(); },
+                setChartProduct: (prod) => {
+                    state.activeProduct = prod;
+                    const btnNasUrea = document.getElementById('btn-nas-urea');
+                    const btnNasNpk = document.getElementById('btn-nas-npk');
+                    if(btnNasUrea) btnNasUrea.classList.toggle('active', prod === 'UREA');
+                    if(btnNasNpk) btnNasNpk.classList.toggle('active', prod === 'NPK');
+
+                    const btnDistUrea = document.getElementById('btn-nas-dist-urea');
+                    const btnDistNpk = document.getElementById('btn-nas-dist-npk');
+                    if(btnDistUrea) btnDistUrea.classList.toggle('active', prod === 'UREA');
+                    if(btnDistNpk) btnDistNpk.classList.toggle('active', prod === 'NPK');
+
+                    updateDashboard();
+                },
+                renderProvChart,
+                renderDistProvChart,
+                showLoginModal: () => document.getElementById('loginModal').style.display = 'flex',
+                closeLoginModal: () => document.getElementById('loginModal').style.display = 'none',
+                login: () => {
+                    const p = document.getElementById('adminPass').value;
+                    if(p === 'pso123') {
+                        state.isAdmin = true;
+                        document.getElementById('admin-menu').style.display = 'block';
+                        document.getElementById('login-btn-container').style.display = 'none';
+                        document.getElementById('loginModal').style.display = 'none';
+                    } else { alert('Password salah!'); }
+                },
+                logout: () => {
+                    state.isAdmin = false;
+                    document.getElementById('admin-menu').style.display = 'none';
+                    document.getElementById('login-btn-container').style.display = 'block';
+                },
+                analyzeData, 
+                flipCard
+            };
+        })();
+        window.onload = app.init;
+    </script>
 </body>
 </html>
