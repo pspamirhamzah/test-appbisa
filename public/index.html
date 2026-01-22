@@ -45,11 +45,11 @@
             --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
             
             /* Brand Colors (Dark Mode) */
-            --color-urea: #FFDE00;     
-            --color-npk: #38bdf8;      
-            --color-success: #4ade80;  
-            --color-danger: #f87171;   
-            --color-stock: #a8a29e;    
+            --color-urea: #FFDE00;      
+            --color-npk: #38bdf8;       
+            --color-success: #4ade80;   
+            --color-danger: #f87171;    
+            --color-stock: #a8a29e;     
             --color-accent-1: #ffffff; 
             
             /* Medal Colors */
@@ -983,11 +983,17 @@
 
                 const isUrea = state.activeProduct === 'UREA';
                 const data = isUrea ? nasStats.UREA : nasStats.NPK;
-                const color = isUrea ? '#FFDE00' : '#38bdf8'; 
+                // const color = isUrea ? '#FFDE00' : '#38bdf8'; 
                 
                 // Colors for stack
                 const colorTruck = isUrea ? '#f59e0b' : '#0ea5e9'; // Amber vs Sky
                 const colorKapal = isUrea ? '#fcd34d' : '#7dd3fc'; // Light Amber vs Light Sky
+
+                // MODIFIED: Stock Style to match Sales Realization
+                const colorStock = '#10b981'; // Green for Stock (Emerald)
+                const gradientStock = ctx.createLinearGradient(0, 0, 0, 300);
+                gradientStock.addColorStop(0, hexToRgbA(colorStock, 0.4));
+                gradientStock.addColorStop(1, hexToRgbA(colorStock, 0.0));
 
                 charts.nasionalDist = new Chart(ctx, {
                     type: 'bar',
@@ -995,14 +1001,17 @@
                         labels: ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'],
                         datasets: [
                             {
-                                type: 'line', // Stock Line (Updated)
+                                type: 'line', 
                                 label: 'Stok', 
-                                data: data.stock, // Added Stock Data
-                                borderColor: '#10b981', // Green for Stock
-                                borderWidth: 2, 
-                                fill: false, 
+                                data: data.stock, 
+                                borderColor: colorStock, 
+                                backgroundColor: gradientStock, // Add Gradient
+                                borderWidth: 3,                 // Thicker line
+                                fill: true,                     // Enable fill
                                 tension: 0.4, 
-                                pointRadius: 0, 
+                                pointRadius: 4,                 // Show points
+                                pointHoverRadius: 6,
+                                pointStyle: 'circle',
                                 order: 0 // On Top
                             },
                             {
@@ -1011,10 +1020,10 @@
                                 fill: false, tension: 0.4, pointRadius: 0, pointStyle: createDashedCircle('#999'), order: 1
                             },
                             {
-                                label: 'Truk (Inbag)', data: data.land, backgroundColor: colorTruck, stack: 'stack1', order: 2
+                                label: 'Truk', data: data.land, backgroundColor: colorTruck, stack: 'stack1', order: 2
                             },
                             {
-                                label: 'Kapal (Curah+Inbag)', data: data.sea, backgroundColor: colorKapal, stack: 'stack1', order: 3
+                                label: 'Kapal', data: data.sea, backgroundColor: colorKapal, stack: 'stack1', order: 3
                             }
                         ]
                     },
@@ -1090,10 +1099,10 @@
                                 type: 'line', label: 'Alokasi', data: mTarget, borderColor: '#666', borderDash: [6, 6], borderWidth: 2, fill: false, tension: 0.4, pointRadius: 0, pointStyle: targetIcon, order: 1
                             },
                             {
-                                label: 'Truk (Inbag)', data: mLand, backgroundColor: colorTruck, stack: 'stack1', order: 2
+                                label: 'Truk', data: mLand, backgroundColor: colorTruck, stack: 'stack1', order: 2
                             },
                             {
-                                label: 'Kapal (Curah+Inbag)', data: mSea, backgroundColor: colorKapal, stack: 'stack1', order: 3
+                                label: 'Kapal', data: mSea, backgroundColor: colorKapal, stack: 'stack1', order: 3
                             }
                         ]
                     },
