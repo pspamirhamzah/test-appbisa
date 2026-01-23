@@ -21,6 +21,9 @@
     <!-- Chart.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 
+    <!-- html2pdf.js for Export PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
     <style>
         /* ========================================= */
         /* 1. VARIABLES & THEME                      */
@@ -41,11 +44,11 @@
             --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
             
             /* Brand Colors (Dark Mode) */
-            --color-urea: #FFDE00;      
-            --color-npk: #38bdf8;       
-            --color-success: #4ade80;   
-            --color-danger: #f87171;    
-            --color-stock: #a8a29e;     
+            --color-urea: #FFDE00;       
+            --color-npk: #38bdf8;        
+            --color-success: #4ade80;    
+            --color-danger: #f87171;     
+            --color-stock: #a8a29e;      
             --color-accent-1: #ffffff; 
             
             /* Medal Colors */
@@ -130,21 +133,57 @@
         .brand h2 span { font-weight: 400; color: var(--color-urea); }
         .brand p { font-size: 11px; color: var(--text-secondary); margin: 2px 0 0 0; font-weight: 400; letter-spacing: 0.5px; }
 
-        .nav-header { 
-            font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); 
-            margin: 16px 12px 8px; letter-spacing: 1px; white-space: nowrap; transition: opacity 0.2s; 
-        }
-
+        /* NAV STYLES UPDATED FOR DROPDOWN */
         .nav-item {
             display: flex; align-items: center; gap: 14px;
             padding: 12px; border-radius: 12px; cursor: pointer; color: var(--text-secondary);
             font-size: 14px; font-weight: 500; transition: all 0.2s;
-            margin-bottom: 4px; white-space: nowrap; overflow: hidden;
+            margin-bottom: 4px; white-space: nowrap; overflow: hidden; user-select: none;
         }
         .nav-item i { width: 20px; text-align: center; font-size: 16px; flex-shrink: 0; }
         .nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
         .nav-item.active { background: var(--bg-hover); color: var(--text-primary); font-weight: 600; }
         .nav-item.active i { color: var(--color-urea); }
+
+        /* Parent Menu specific styles */
+        .nav-parent {
+            justify-content: space-between;
+            font-weight: 600;
+        }
+        .nav-parent .parent-left { display: flex; align-items: center; gap: 14px; }
+        .arrow-icon { font-size: 10px !important; width: 10px !important; transition: transform 0.3s; }
+        .nav-parent.open .arrow-icon { transform: rotate(180deg); }
+
+        /* Submenu container */
+        .nav-submenu {
+            display: none;
+            flex-direction: column;
+            padding-left: 0;
+            overflow: hidden;
+            margin-bottom: 8px;
+            background: rgba(0,0,0,0.15); /* Slightly darker background for submenu */
+            border-radius: 12px;
+        }
+        .nav-submenu.show { display: flex; }
+        
+        .nav-sub-item {
+            display: flex; align-items: center; gap: 14px;
+            padding: 10px 12px 10px 48px; /* Indent sub items */
+            cursor: pointer; color: var(--text-secondary);
+            font-size: 13px; font-weight: 500; transition: all 0.2s;
+            white-space: nowrap; overflow: hidden;
+        }
+        .nav-sub-item:hover { color: var(--text-primary); }
+        .nav-sub-item.active { color: var(--color-urea); font-weight: 600; background: transparent; }
+        .nav-sub-item.active::before {
+            content: ''; position: absolute; left: 30px; 
+            width: 6px; height: 6px; background: var(--color-urea); border-radius: 50%;
+        }
+
+        .nav-header { 
+            font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); 
+            margin: 16px 12px 8px; letter-spacing: 1px; white-space: nowrap; transition: opacity 0.2s; 
+        }
 
         .nav-spacer { flex-grow: 1; }
         .nav-login { margin-top: auto; border-top: none; padding-top: 10px; }
@@ -343,7 +382,7 @@
     <!-- LOADER -->
     <div id="loader">
         <div class="spinner"></div>
-        <div style="font-size: 12px; color: var(--text-secondary); letter-spacing: 2px;">MEMUAT DATA...</div>
+        <div style="font-size: 12px; color: var(--text-secondary); letter-spacing: 2px;">SABAR YEE...</div>
     </div>
 
     <!-- SIDEBAR OVERLAY FOR MOBILE -->
@@ -358,27 +397,44 @@
             </div>
         </div>
 
-        <!-- MENU PENJUALAN -->
-        <div class="nav-header">PENJUALAN</div>
-        <div class="nav-item active" id="nav-sales-subsidi" onclick="app.navigate('SALES', 'SUBSIDI')">
-            <i class="fas fa-industry"></i> <span>Subsidi</span>
+        <div class="nav-header">MAIN MENU</div>
+
+        <!-- DROPDOWN PENJUALAN -->
+        <div class="nav-item nav-parent" id="parent-sales" onclick="app.toggleMenu('submenu-sales', this)">
+            <div class="parent-left">
+                <i class="fas fa-chart-pie"></i> <span>PENJUALAN</span>
+            </div>
+            <i class="fas fa-chevron-down arrow-icon"></i>
         </div>
-        <div class="nav-item" id="nav-sales-retail" onclick="app.navigate('SALES', 'RETAIL')">
-            <i class="fas fa-store"></i> <span>Retail</span>
+        <div class="nav-submenu" id="submenu-sales">
+            <div class="nav-sub-item" id="nav-sales-subsidi" onclick="app.navigate('SALES', 'SUBSIDI')">
+                <span>Subsidi</span>
+            </div>
+            <div class="nav-sub-item" id="nav-sales-retail" onclick="app.navigate('SALES', 'RETAIL')">
+                <span>Retail</span>
+            </div>
         </div>
         
-        <!-- MENU DISTRIBUSI BARU -->
-        <div class="nav-header">DISTRIBUSI</div>
-        <div class="nav-item" id="nav-dist-subsidi" onclick="app.navigate('DISTRIBUSI', 'SUBSIDI')">
-            <i class="fas fa-industry"></i> <span>Subsidi</span>
+        <!-- DROPDOWN DISTRIBUSI -->
+        <div class="nav-item nav-parent" id="parent-dist" onclick="app.toggleMenu('submenu-dist', this)">
+             <div class="parent-left">
+                <i class="fas fa-truck-fast"></i> <span>DISTRIBUSI</span>
+            </div>
+            <i class="fas fa-chevron-down arrow-icon"></i>
         </div>
-        <div class="nav-item" id="nav-dist-retail" onclick="app.navigate('DISTRIBUSI', 'RETAIL')">
-            <i class="fas fa-store"></i> <span>Retail</span>
+        <div class="nav-submenu" id="submenu-dist">
+            <div class="nav-sub-item" id="nav-dist-subsidi" onclick="app.navigate('DISTRIBUSI', 'SUBSIDI')">
+                <span>Subsidi</span>
+            </div>
+            <div class="nav-sub-item" id="nav-dist-retail" onclick="app.navigate('DISTRIBUSI', 'RETAIL')">
+                <span>Retail</span>
+            </div>
         </div>
 
+        <!-- ADMIN MENU (Tetap Flat) -->
         <div id="admin-menu" style="display: none;">
             <div class="nav-header">ADMINISTRATOR</div>
-            <div class="nav-item" onclick="app.showLoginModal()"> <!-- Placeholder -->
+            <div class="nav-item" onclick="app.showLoginModal()"> 
                 <i class="fas fa-plus-square"></i> <span>Input Data</span>
             </div>
             <div class="nav-item" onclick="app.logout()">
@@ -406,6 +462,9 @@
                 </div>
             </div>
             <div class="header-actions">
+                <button class="btn-theme-toggle" onclick="app.exportPDF()" title="Export PDF">
+                    <i class="fas fa-file-pdf"></i>
+                </button>
                 <button class="btn-theme-toggle" onclick="app.toggleTheme()" title="Ganti Tema">
                     <i id="theme-icon" class="fas fa-sun"></i>
                 </button>
@@ -740,7 +799,7 @@
             let state = {
                 rawData: [],
                 page: 'SALES', // 'SALES' or 'DISTRIBUSI'
-                sector: 'SUBSIDI',      
+                sector: 'SUBSIDI',       
                 activeProduct: 'UREA',  
                 selectedYear: new Date().getFullYear(),
                 sidebarOpen: true,
@@ -792,7 +851,6 @@
                 state.theme = state.theme === 'dark' ? 'light' : 'dark';
                 localStorage.setItem('theme', state.theme);
                 applyTheme(state.theme);
-                // We access updateDashboard later via declaration but here it's fine since it's user triggered
                 if (typeof updateDashboard === 'function') updateDashboard(); 
             };
 
@@ -843,6 +901,47 @@
                 if(window.innerWidth <= 768) { state.sidebarOpen = false; } 
                 else { state.sidebarOpen = true; }
                 renderSidebar();
+            };
+
+            // --- MENU TOGGLE LOGIC ---
+            const toggleMenu = (menuId, btnElement) => {
+                const menu = document.getElementById(menuId);
+                const isHidden = !menu.classList.contains('show');
+                
+                // Close all others (optional)
+                document.querySelectorAll('.nav-submenu').forEach(el => el.classList.remove('show'));
+                document.querySelectorAll('.nav-parent').forEach(el => el.classList.remove('open'));
+
+                if(isHidden) {
+                    menu.classList.add('show');
+                    btnElement.classList.add('open');
+                }
+            };
+
+            // --- EXPORT PDF LOGIC ---
+            const exportPDF = () => {
+                const element = document.querySelector('.content-scroll');
+                const btnIcon = document.querySelector('.btn-theme-toggle[title="Export PDF"] i');
+                
+                // Visual Feedback
+                const originalIcon = btnIcon.className;
+                btnIcon.className = 'fas fa-circle-notch fa-spin';
+
+                const opt = {
+                    margin:       0.5,
+                    filename:     `Laporan_${state.page}_${state.sector}_${state.selectedYear}.pdf`,
+                    image:        { type: 'jpeg', quality: 0.98 },
+                    html2canvas:  { scale: 2, useCORS: true },
+                    jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }
+                };
+
+                html2pdf().set(opt).from(element).save().then(() => {
+                    btnIcon.className = originalIcon;
+                }).catch(err => {
+                    console.error(err);
+                    alert("Gagal Export PDF");
+                    btnIcon.className = originalIcon;
+                });
             };
 
             // ==========================================
@@ -1531,6 +1630,16 @@
                 }
                 fetchData(); 
                 checkScreenSize(); 
+
+                // OPEN DEFAULT MENU
+                const defaultMenu = state.page === 'SALES' ? 'submenu-sales' : 'submenu-dist';
+                const defaultBtn = state.page === 'SALES' ? document.getElementById('parent-sales') : document.getElementById('parent-dist');
+                if(defaultMenu && defaultBtn) {
+                    toggleMenu(defaultMenu, defaultBtn);
+                }
+                
+                // Set active item
+                navigate(state.page, state.sector);
             };
 
             const fetchData = async () => {
@@ -1729,46 +1838,63 @@
 
             const flipCard = (type) => { document.getElementById(`flip-${type}`).classList.remove('flipped'); };
 
+            const navigate = (pageType, sectorType) => {
+                state.page = pageType;
+                state.sector = sectorType;
+                
+                const navIds = ['nav-sales-subsidi', 'nav-sales-retail', 'nav-dist-subsidi', 'nav-dist-retail'];
+                navIds.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.classList.remove('active');
+                });
+                
+                let activeId = '';
+                let titlePrefix = '';
+                let parentMenuId = '';
+                let parentBtnId = '';
+                
+                if (pageType === 'SALES') {
+                    if (sectorType === 'SUBSIDI') activeId = 'nav-sales-subsidi';
+                    else activeId = 'nav-sales-retail';
+                    titlePrefix = 'Penjualan';
+                    parentMenuId = 'submenu-sales';
+                    parentBtnId = 'parent-sales';
+                } else {
+                    if (sectorType === 'SUBSIDI') activeId = 'nav-dist-subsidi';
+                    else activeId = 'nav-dist-retail';
+                    titlePrefix = 'Distribusi';
+                    parentMenuId = 'submenu-dist';
+                    parentBtnId = 'parent-dist';
+                }
+                
+                // Highlight sub-item
+                const activeEl = document.getElementById(activeId);
+                if(activeEl) activeEl.classList.add('active');
+                
+                // Ensure parent menu is open
+                const parentMenu = document.getElementById(parentMenuId);
+                const parentBtn = document.getElementById(parentBtnId);
+                if (parentMenu && parentBtn) {
+                    if (!parentMenu.classList.contains('show')) {
+                        toggleMenu(parentMenuId, parentBtn);
+                    }
+                }
+
+                const sectorLabel = sectorType === 'SUBSIDI' ? 'Subsidi' : 'Retail';
+                const pageTitle = document.getElementById('page-title-text');
+                if (pageTitle) pageTitle.innerText = `${titlePrefix} ${sectorLabel}`;
+
+                updateDashboard();
+                if(window.innerWidth <= 768) { state.sidebarOpen = false; renderSidebar(); }
+            };
+
             // Public Methods
             return {
                 init,
                 toggleSidebar: () => { state.sidebarOpen = !state.sidebarOpen; renderSidebar(); },
                 toggleTheme,
-                
-                navigate: (pageType, sectorType) => {
-                    state.page = pageType;
-                    state.sector = sectorType;
-                    
-                    const navIds = ['nav-sales-subsidi', 'nav-sales-retail', 'nav-dist-subsidi', 'nav-dist-retail'];
-                    navIds.forEach(id => {
-                        const el = document.getElementById(id);
-                        if (el) el.classList.remove('active');
-                    });
-                    
-                    let activeId = '';
-                    let titlePrefix = '';
-                    
-                    if (pageType === 'SALES') {
-                        if (sectorType === 'SUBSIDI') activeId = 'nav-sales-subsidi';
-                        else activeId = 'nav-sales-retail';
-                        titlePrefix = 'Penjualan';
-                    } else {
-                        if (sectorType === 'SUBSIDI') activeId = 'nav-dist-subsidi';
-                        else activeId = 'nav-dist-retail';
-                        titlePrefix = 'Distribusi';
-                    }
-                    
-                    const activeEl = document.getElementById(activeId);
-                    if(activeEl) activeEl.classList.add('active');
-                    
-                    const sectorLabel = sectorType === 'SUBSIDI' ? 'Subsidi' : 'Retail';
-                    const pageTitle = document.getElementById('page-title-text');
-                    if (pageTitle) pageTitle.innerText = `${titlePrefix} ${sectorLabel}`;
-
-                    updateDashboard();
-                    if(window.innerWidth <= 768) { state.sidebarOpen = false; renderSidebar(); }
-                },
-
+                toggleMenu,
+                navigate,
                 changeYear: (val) => { state.selectedYear = parseInt(val); updateDashboard(); },
                 setChartProduct: (prod) => {
                     state.activeProduct = prod;
@@ -1803,7 +1929,8 @@
                     document.getElementById('login-btn-container').style.display = 'block';
                 },
                 analyzeData, 
-                flipCard
+                flipCard,
+                exportPDF 
             };
         })();
         window.onload = app.init;
