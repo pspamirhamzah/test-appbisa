@@ -21,9 +21,6 @@
     <!-- Chart.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 
-    <!-- html2pdf.js for Export PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-
     <style>
         /* ========================================= */
         /* 1. VARIABLES & THEME                      */
@@ -462,9 +459,6 @@
                 </div>
             </div>
             <div class="header-actions">
-                <button class="btn-theme-toggle" onclick="app.exportPDF()" title="Export PDF">
-                    <i class="fas fa-file-pdf"></i>
-                </button>
                 <button class="btn-theme-toggle" onclick="app.toggleTheme()" title="Ganti Tema">
                     <i id="theme-icon" class="fas fa-sun"></i>
                 </button>
@@ -787,6 +781,9 @@
         Chart.defaults.borderColor = '#424242';
         Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
         Chart.defaults.font.size = 11;
+        
+        // PENTING: Matikan animasi global agar html2pdf bisa menangkap grafik dengan benar
+        Chart.defaults.animation = false;
 
         const app = (() => {
             // URL APP SCRIPT BARU
@@ -908,7 +905,6 @@
                 const menu = document.getElementById(menuId);
                 const isHidden = !menu.classList.contains('show');
                 
-                // Close all others (optional)
                 document.querySelectorAll('.nav-submenu').forEach(el => el.classList.remove('show'));
                 document.querySelectorAll('.nav-parent').forEach(el => el.classList.remove('open'));
 
@@ -916,32 +912,6 @@
                     menu.classList.add('show');
                     btnElement.classList.add('open');
                 }
-            };
-
-            // --- EXPORT PDF LOGIC ---
-            const exportPDF = () => {
-                const element = document.querySelector('.content-scroll');
-                const btnIcon = document.querySelector('.btn-theme-toggle[title="Export PDF"] i');
-                
-                // Visual Feedback
-                const originalIcon = btnIcon.className;
-                btnIcon.className = 'fas fa-circle-notch fa-spin';
-
-                const opt = {
-                    margin:       0.5,
-                    filename:     `Laporan_${state.page}_${state.sector}_${state.selectedYear}.pdf`,
-                    image:        { type: 'jpeg', quality: 0.98 },
-                    html2canvas:  { scale: 2, useCORS: true },
-                    jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }
-                };
-
-                html2pdf().set(opt).from(element).save().then(() => {
-                    btnIcon.className = originalIcon;
-                }).catch(err => {
-                    console.error(err);
-                    alert("Gagal Export PDF");
-                    btnIcon.className = originalIcon;
-                });
             };
 
             // ==========================================
@@ -1433,10 +1403,6 @@
                 updateCard('UREA');
                 updateCard('NPK');
             };
-
-            // ==========================================
-            // DATA PROCESSING FUNCTIONS (CALL RENDERERS)
-            // ==========================================
 
             const processSalesData = () => {
                 const { rawData, selectedYear, sector, activeProduct } = state;
@@ -1930,7 +1896,6 @@
                 },
                 analyzeData, 
                 flipCard,
-                exportPDF 
             };
         })();
         window.onload = app.init;
