@@ -1294,15 +1294,22 @@
                     const elReal = document.getElementById(`val-dist-${keyL}-real`);
                     if(elReal) elReal.innerText = fmt(real);
                     
-                    // Populate Split View
+                    // --- MODIFIED: PERCENTAGE CALCULATION ---
+                    const getPct = (val, total) => total > 0 ? ((val / total) * 100).toFixed(0) + '%' : '0%';
+
+                    // Populate Split View with Percentages
                     const elInbag = document.getElementById(`val-dist-${keyL}-inbag`);
-                    if(elInbag) elInbag.innerText = fmt(details.bag);
+                    if(elInbag) elInbag.innerText = getPct(details.bag, real);
+                    
                     const elCurah = document.getElementById(`val-dist-${keyL}-curah`);
-                    if(elCurah) elCurah.innerText = fmt(details.bulk);
+                    if(elCurah) elCurah.innerText = getPct(details.bulk, real);
+                    
                     const elTruck = document.getElementById(`val-dist-${keyL}-truck`);
-                    if(elTruck) elTruck.innerText = fmt(details.land);
+                    if(elTruck) elTruck.innerText = getPct(details.land, real);
+                    
                     const elKapal = document.getElementById(`val-dist-${keyL}-kapal`);
-                    if(elKapal) elKapal.innerText = fmt(details.sea);
+                    if(elKapal) elKapal.innerText = getPct(details.sea, real);
+                    // ----------------------------------------
 
                     // Growth
                     let growth = 0; let isUp = true;
