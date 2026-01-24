@@ -532,8 +532,9 @@
                         <div class="kpi-big" id="growth-npk-val">0%</div>
                         <div class="kpi-subtext">vs Tahun Lalu</div>
                         <div class="growth-legend">
-                            <div class="legend-item"><span class="dot bg-npk"></span> <span id="year-curr-npk">2025</span>: <span id="val-dist-npk-curr">0</span></div>
-                            <div class="legend-item"><span class="dot bg-grey"></span> <span id="year-prev-dist-npk">2024</span>: <span id="val-dist-npk-prev">0</span></div>
+                            <!-- FIXED IDs HERE: Removed 'dist' to match JS logic for Sales -->
+                            <div class="legend-item"><span class="dot bg-npk"></span> <span id="year-curr-npk">2025</span>: <span id="val-npk-curr">0</span></div>
+                            <div class="legend-item"><span class="dot bg-grey"></span> <span id="year-prev-npk">2024</span>: <span id="val-npk-prev">0</span></div>
                         </div>
                     </div>
                 </div>
@@ -1097,7 +1098,10 @@
                         interaction: { mode: 'index', intersect: false },
                         plugins: { 
                             legend: { display: true, labels: { usePointStyle: true, pointStyle: 'rect', boxWidth: 8, padding: 20 } },
-                            tooltip: { backgroundColor: 'rgba(33, 33, 33, 0.95)', titleColor: '#ececec', bodyColor: '#b3b3b3', borderColor: '#424242', borderWidth: 1, callbacks: { label: (c) => c.dataset.label + ': ' + formatNumber(c.raw) } }
+                            tooltip: { 
+                                backgroundColor: 'rgba(33, 33, 33, 0.95)', titleColor: '#ececec', bodyColor: '#b3b3b3', borderColor: '#424242', borderWidth: 1, 
+                                callbacks: { label: (c) => c.dataset.label + ': ' + new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(c.raw) } 
+                            }
                         },
                         scales: { 
                             x: { grid: { display: false }, stacked: true }, 
@@ -1201,7 +1205,10 @@
                         interaction: { mode: 'index', intersect: false },
                         plugins: { 
                             legend: { display: true, labels: { usePointStyle: true, pointStyle: 'rect', boxWidth: 8, padding: 20 } },
-                            tooltip: { backgroundColor: 'rgba(33, 33, 33, 0.95)', titleColor: '#ececec', bodyColor: '#b3b3b3', borderColor: '#424242', borderWidth: 1, callbacks: { label: (c) => c.dataset.label + ': ' + formatNumber(c.raw) } }
+                            tooltip: { 
+                                backgroundColor: 'rgba(33, 33, 33, 0.95)', titleColor: '#ececec', bodyColor: '#b3b3b3', borderColor: '#424242', borderWidth: 1, 
+                                callbacks: { label: (c) => c.dataset.label + ': ' + new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(c.raw) } 
+                            }
                         },
                         scales: { x: { grid: { display: false }, stacked: true }, y: { grid: { color: state.theme==='dark'?'#333':'#e5e7eb' }, beginAtZero: true, stacked: true } }
                     }
@@ -1259,7 +1266,8 @@
                 let arr = Object.keys(provData).map(key => {
                     const item = provData[key];
                     let sortVal = item.real;
-                    let displayVal = formatNumber(item.real);
+                    // Force Integer for Rankings in Distribution page
+                    let displayVal = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(item.real);
                     return { name: key, val: sortVal, display: displayVal };
                 });
 
@@ -1349,17 +1357,22 @@
             };
 
             const renderDistKPI = (stats) => {
-                const fmt = (n) => formatNumber(n);
+                // Formatter for main numbers (No Decimal)
+                const fmtInt = (n) => new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(n);
+                // Formatter for Growth Card exceptions (Keep Decimal)
+                const fmtDec = (n) => formatNumber(n); 
+
                 const updateCard = (key) => {
                     const real = stats.curr[key].real;
                     const details = stats.details[key];
                     const prev = stats.prev[key].real;
                     const keyL = key.toLowerCase();
                     
+                    // Realisasi Main Value - Integer
                     const elReal = document.getElementById(`val-dist-${keyL}-real`);
-                    if(elReal) elReal.innerText = fmt(real);
+                    if(elReal) elReal.innerText = fmtInt(real);
                     
-                    // --- MODIFIED: PERCENTAGE CALCULATION ---
+                    // --- PERCENTAGE CALCULATION ---
                     const getPct = (val, total) => total > 0 ? ((val / total) * 100).toFixed(0) + '%' : '0%';
 
                     // Populate Split View with Percentages
@@ -1391,14 +1404,16 @@
                     const elYearCurr = document.getElementById(`year-curr-dist-${keyL}`);
                     if(elYearCurr) elYearCurr.innerText = state.selectedYear;
                     
+                    // Growth Card Legend (Reverted to Integer as requested)
                     const elValCurr = document.getElementById(`val-dist-${keyL}-curr`);
-                    if(elValCurr) elValCurr.innerText = fmt(real);
+                    if(elValCurr) elValCurr.innerText = fmtInt(real); // Changed from fmtDec to fmtInt
 
                     const elYearPrev = document.getElementById(`year-prev-dist-${keyL}`);
                     if(elYearPrev) elYearPrev.innerText = state.selectedYear - 1;
                     
+                    // Growth Card Legend (Reverted to Integer as requested)
                     const elValPrev = document.getElementById(`val-dist-${keyL}-prev`);
-                    if(elValPrev) elValPrev.innerText = fmt(prev);
+                    if(elValPrev) elValPrev.innerText = fmtInt(prev); // Changed from fmtDec to fmtInt
                 };
                 updateCard('UREA');
                 updateCard('NPK');
@@ -1619,7 +1634,10 @@
                     const data = await res.json();
                     if (!Array.isArray(data)) throw new Error("Format data salah");
                     
-                    const currentHash = JSON.stringify(data).length + "_" + data.length;
+                    // IMPROVED HASHING: Sum of TONASE to detect value changes
+                    const totalTonase = data.reduce((acc, row) => acc + (parseFloat(row.TONASE)||0), 0);
+                    const currentHash = data.length + "_" + totalTonase;
+
                     if (currentHash !== state.lastDataHash) {
                         const now = new Date();
                         const formattedDate = `Update: ${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
