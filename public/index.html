@@ -1614,10 +1614,10 @@
                 if (elSales) elSales.style.display = page === 'SALES' ? 'block' : 'none';
                 if (elDist) elDist.style.display = page === 'DISTRIBUSI' ? 'block' : 'none';
 
+                // Always process both data sets so global variables are populated
+                // This prevents 'undefined' errors when switching contexts quickly
                 processSalesData();
-                if (page === 'DISTRIBUSI') {
-                    processDistributionData();
-                }
+                processDistributionData();
             };
 
             const processData = (data) => {
@@ -1822,11 +1822,11 @@
                 const ctxData = `
                     DATA: ${ctxLabel}, Produk ${prod}, Sektor ${sec}, Tahun ${year}.
                     - Realisasi Kumulatif (s.d ${currMonthName}): ${formatNumber(ytdReal)} Ton.
-                    - Target Kumulatif (s.d ${currMonthName}): ${formatNumber(ytdTarget)} Ton.
-                    - Target Tahunan: ${formatNumber(annualTarget)} Ton.
+                    - Alokasi Kumulatif (s.d ${currMonthName}): ${formatNumber(ytdTarget)} Ton.
+                    - Alokasi Tahunan: ${formatNumber(annualTarget)} Ton.
                     - Stok Saat Ini (Akhir ${currMonthName}): ${formatNumber(currentStock)} Ton.
-                    - % Capaian vs Target Kumulatif: ${pctYtd}%.
-                    - % Capaian vs Target Tahunan: ${pctAnnual}%.
+                    - % Capaian vs Alokasi Kumulatif: ${pctYtd}%.
+                    - % Capaian vs Alokasi Tahunan: ${pctAnnual}%.
                 `;
 
                 // ... External Info Logic (Keep existing) ...
@@ -1873,14 +1873,14 @@
                     ${contextString || "Tidak ada isu khusus."}
                     
                     Instruksi:
-                    1. Analisa performa berdasarkan capaian terhadap Target Kumulatif (s.d bulan ini) dan Ketersediaan Stok.
+                    1. Analisa performa berdasarkan capaian terhadap Alokasi Kumulatif (s.d bulan ini) dan Ketersediaan Stok.
                     2. Berikan 3 poin insight: Status, Faktor Penyebab, dan Rekomendasi Aksi.
                     3. ATURAN PENTING: Gunakan tepat 2 kalimat per poin.
-                    4. FORMAT OUTPUT: Gunakan format "Label: Isi" (Tanpa tanda kurung siku).
+                    4. FORMAT OUTPUT: Gunakan format "Label: Isi" (Tanpa tanda kurung siku). Gunakan istilah "Alokasi" bukan "Target".
                     
                     Format HTML (Body Only):
                     <ul style="margin:0; padding-left:1.2em; font-size:12px;">
-                        <li style="margin-bottom:6px;"><strong>Status:</strong> (Analisa capaian & posisi stok aman/tidak).</li>
+                        <li style="margin-bottom:6px;"><strong>Status:</strong> (Analisa capaian vs Alokasi & posisi stok aman/tidak).</li>
                         <li style="margin-bottom:6px;"><strong>Faktor:</strong> (Penyebab utama dari data/info).</li>
                         <li style="margin-bottom:6px;"><strong>Aksi:</strong> (Rekomendasi strategis).</li>
                     </ul>
@@ -1892,11 +1892,19 @@
                         body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
                     });
                     const result = await response.json();
+                    
+                    // Added safety check for candidates
+                    if (!result.candidates || result.candidates.length === 0) {
+                        console.error("Gemini API Error (No Candidates):", result);
+                        content.innerHTML = `<p style="color:var(--color-danger); padding:10px;">Maaf, AI sedang sibuk atau tidak dapat memberikan respon saat ini.</p>`;
+                        return;
+                    }
+
                     let cleanText = result.candidates[0].content.parts[0].text.replace(/```html/g, '').replace(/```/g, '').trim();
                     content.innerHTML = `<div style="padding-top:10px;">${cleanText}</div>`;
                 } catch (e) {
-                    console.error(e);
-                    content.innerHTML = `<p>Gagal memuat AI.</p>`;
+                    console.error("Analysis Error:", e);
+                    content.innerHTML = `<p style="padding:10px;">Gagal memuat AI. Cek koneksi internet.</p>`;
                 }
             };
 
