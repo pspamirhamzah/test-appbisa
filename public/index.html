@@ -41,11 +41,11 @@
             --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
             
             /* Brand Colors (Dark Mode) */
-            --color-urea: #FFDE00;       
+            --color-urea: #FFDE00;        
             --color-npk: #38bdf8;        
             --color-success: #4ade80;    
-            --color-danger: #f87171;     
-            --color-stock: #a8a29e;      
+            --color-danger: #f87171;      
+            --color-stock: #a8a29e;       
             --color-accent-1: #ffffff; 
             
             /* Medal Colors */
@@ -797,7 +797,7 @@
             let state = {
                 rawData: [],
                 page: 'SALES', // 'SALES' or 'DISTRIBUSI'
-                sector: 'SUBSIDI',       
+                sector: 'SUBSIDI',        
                 activeProduct: 'UREA',  
                 selectedYear: new Date().getFullYear(),
                 sidebarOpen: true,
@@ -1620,79 +1620,6 @@
                 }
             };
 
-            const init = () => { 
-                applyTheme(state.theme);
-                if(state.lastUpdateDate) {
-                    const headerText = document.getElementById('header-update-text');
-                    if(headerText) headerText.innerText = state.lastUpdateDate;
-                }
-                fetchData(); 
-                checkScreenSize(); 
-
-                // OPEN DEFAULT MENU
-                const defaultMenu = state.page === 'SALES' ? 'submenu-sales' : 'submenu-dist';
-                const defaultBtn = state.page === 'SALES' ? document.getElementById('parent-sales') : document.getElementById('parent-dist');
-                if(defaultMenu && defaultBtn) {
-                    toggleMenu(defaultMenu, defaultBtn);
-                }
-                
-                // Set active item
-                navigate(state.page, state.sector);
-            };
-
-            const fetchData = async () => {
-                const loader = document.getElementById('loader');
-                if (loader) loader.style.display = 'flex';
-                
-                setTimeout(() => { if(loader) loader.style.display = 'none'; }, 10000);
-
-                try {
-                    const res = await fetch(API_URL);
-                    const data = await res.json();
-                    if (!Array.isArray(data)) throw new Error("Format data salah");
-                    
-                    // IMPROVED HASHING: Sum of TONASE to detect value changes
-                    const totalTonase = data.reduce((acc, row) => acc + (parseFloat(row.TONASE)||0), 0);
-                    const currentHash = data.length + "_" + totalTonase;
-
-                    if (currentHash !== state.lastDataHash) {
-                        const now = new Date();
-                        const formattedDate = `Update: ${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
-                        state.lastUpdateDate = formattedDate;
-                        state.lastDataHash = currentHash;
-                        localStorage.setItem('last_update_date', formattedDate);
-                        localStorage.setItem('last_data_hash', currentHash);
-                        const headerText = document.getElementById('header-update-text');
-                        if(headerText) headerText.innerText = formattedDate;
-                    } else {
-                         const headerText = document.getElementById('header-update-text');
-                         if(headerText) headerText.innerText = state.lastUpdateDate;
-                    }
-
-                    // --- NEW: EXTRACT INFO_AI DATA ---
-                    const salesDistData = [];
-                    const aiData = [];
-
-                    data.forEach(row => {
-                        // Check if row belongs to info_ai based on columns
-                        if (row.INFORMASI && row.KATEGORI_AI) { 
-                             aiData.push(row);
-                        } else {
-                             salesDistData.push(row);
-                        }
-                    });
-
-                    infoAiData = aiData; // Store globally
-                    processData(salesDistData); // Process main data
-
-                } catch (err) {
-                    console.error("Fetch Error:", err);
-                    alert("Gagal mengambil data: " + err.message);
-                } finally {
-                    if(loader) loader.style.display = 'none';
-                }
-            };
-
             const processData = (data) => {
                 state.rawData = data.map(row => ({
                     TAHUN: parseInt(row.TAHUN) || 0,
@@ -1700,11 +1627,10 @@
                     SEKTOR: String(row.SEKTOR || '').toUpperCase(),
                     PRODUK: String(row.PRODUK || '').toUpperCase(),
                     JENIS: String(row.JENIS || '').toUpperCase(),
-                    // Perbaikan Mapping: Menggunakan kolom header dari JSON sampel 
-                    KATEGORI: String(row.KATEGORI || '').toUpperCase(), // Digunakan sbg Moda/Kategori di sheet Dist
-                    MATERIAL: String(row.MATERIAL || '').toUpperCase(), // Digunakan sbg Kemasan/Material di sheet Dist
-                    KEMASAN: String(row.KEMASAN || '').toUpperCase(), 
-                    MODA: String(row.MODA || '').toUpperCase(), 
+                    KATEGORI: String(row.KATEGORI || '').toUpperCase(),
+                    MATERIAL: String(row.MATERIAL || '').toUpperCase(),
+                    KEMASAN: String(row.KEMASAN || '').toUpperCase(),
+                    MODA: String(row.MODA || '').toUpperCase(),
                     PROVINSI: toTitleCase(String(row.PROVINSI || '')),
                     TONASE: parseIndoNumber(row.TONASE)
                 }));
@@ -1725,6 +1651,74 @@
                 updateDashboard(); 
             };
 
+            const fetchData = async () => {
+                const loader = document.getElementById('loader');
+                if (loader) loader.style.display = 'flex';
+                
+                setTimeout(() => { if(loader) loader.style.display = 'none'; }, 10000);
+
+                try {
+                    const res = await fetch(API_URL);
+                    const data = await res.json();
+                    if (!Array.isArray(data)) throw new Error("Format data salah");
+                    
+                    const totalTonase = data.reduce((acc, row) => acc + (parseFloat(row.TONASE)||0), 0);
+                    const currentHash = data.length + "_" + totalTonase;
+
+                    if (currentHash !== state.lastDataHash) {
+                        const now = new Date();
+                        const formattedDate = `Update: ${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+                        state.lastUpdateDate = formattedDate;
+                        state.lastDataHash = currentHash;
+                        localStorage.setItem('last_update_date', formattedDate);
+                        localStorage.setItem('last_data_hash', currentHash);
+                        const headerText = document.getElementById('header-update-text');
+                        if(headerText) headerText.innerText = formattedDate;
+                    } else {
+                         const headerText = document.getElementById('header-update-text');
+                         if(headerText) headerText.innerText = state.lastUpdateDate;
+                    }
+
+                    const salesDistData = [];
+                    const aiData = [];
+
+                    data.forEach(row => {
+                        if (row.INFORMASI && row.KATEGORI_AI) { 
+                             aiData.push(row);
+                        } else {
+                             salesDistData.push(row);
+                        }
+                    });
+
+                    infoAiData = aiData; 
+                    processData(salesDistData); 
+
+                } catch (err) {
+                    console.error("Fetch Error:", err);
+                    alert("Gagal mengambil data: " + err.message);
+                } finally {
+                    if(loader) loader.style.display = 'none';
+                }
+            };
+
+            const init = () => { 
+                applyTheme(state.theme);
+                if(state.lastUpdateDate) {
+                    const headerText = document.getElementById('header-update-text');
+                    if(headerText) headerText.innerText = state.lastUpdateDate;
+                }
+                fetchData(); 
+                checkScreenSize(); 
+
+                const defaultMenu = state.page === 'SALES' ? 'submenu-sales' : 'submenu-dist';
+                const defaultBtn = state.page === 'SALES' ? document.getElementById('parent-sales') : document.getElementById('parent-dist');
+                if(defaultMenu && defaultBtn) {
+                    toggleMenu(defaultMenu, defaultBtn);
+                }
+                
+                navigate(state.page, state.sector);
+            };
+
             // AI Analyze Helper
             const analyzeData = async (type) => {
                 const flipInner = document.getElementById(`flip-${type}`);
@@ -1733,39 +1727,110 @@
                 flipInner.classList.add('flipped');
                 content.innerHTML = '<div style="margin-top:60px; text-align:center; color:var(--text-secondary);"><i class="fas fa-circle-notch fa-spin fa-2x"></i><br><span style="font-size:12px; margin-top:10px; display:block;">Menyiapkan insight...</span></div>';
 
-                let ctxData = "";
-                const prod = state.activeProduct; const sec = state.sector; const year = state.selectedYear;
-                
-                // 1. Get Quantitative Data Context
-                if (type === 'nasional') {
-                    const d = prod === 'UREA' ? statsGlobal.nasional.UREA : statsGlobal.nasional.NPK;
-                    const totalReal = d.real.reduce((a,b)=>a+b,0);
-                    const totalTarget = d.target.reduce((a,b)=>a+b,0);
-                    const pct = totalTarget > 0 ? (totalReal/totalTarget*100).toFixed(1) : 0;
-                    ctxData = `DATA: Nasional, Produk ${prod}, Sektor ${sec}, Tahun ${year}. Realisasi: ${formatNumber(totalReal)} Ton. Alokasi: ${formatNumber(totalTarget)} Ton. Capaian: ${pct}%.`;
-                } else if (type === 'nasionalDist') {
-                    const d = prod === 'UREA' ? distStatsGlobal.nasional.UREA : distStatsGlobal.nasional.NPK;
-                    const totalReal = d.real.reduce((a,b)=>a+b,0);
-                    const totalTarget = d.target.reduce((a,b)=>a+b,0);
-                    const pct = totalTarget > 0 ? (totalReal/totalTarget*100).toFixed(1) : 0;
-                    ctxData = `DATA: Distribusi Nasional, Produk ${prod}, Sektor ${sec}, Tahun ${year}. Realisasi Distribusi: ${formatNumber(totalReal)} Ton. Alokasi: ${formatNumber(totalTarget)} Ton. Capaian: ${pct}%.`;
+                const prod = state.activeProduct; 
+                const sec = state.sector; 
+                const year = state.selectedYear;
+
+                // --- 1. DETERMINE TIME CONTEXT (Run-rate) ---
+                const refData = (prod === 'UREA' ? statsGlobal.nasional.UREA.real : statsGlobal.nasional.NPK.real);
+                let lastMonthIdx = 0;
+                for(let i=11; i>=0; i--) {
+                    if(refData[i] > 0) { lastMonthIdx = i; break; }
+                }
+                const monthsName = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+                const currMonthName = monthsName[lastMonthIdx];
+                const monthsElapsed = lastMonthIdx + 1;
+
+                // --- 2. CALCULATE METRICS (Specific to Type) ---
+                let ytdReal = 0;
+                let ytdTarget = 0;
+                let annualTarget = 0;
+                let currentStock = 0;
+                let ctxLabel = "";
+
+                if (type.includes('nasional')) {
+                    // Use Stats Global Arrays
+                    const source = type === 'nasional' ? statsGlobal : distStatsGlobal;
+                    const d = prod === 'UREA' ? source.nasional.UREA : source.nasional.NPK;
+                    
+                    ytdReal = d.real.slice(0, monthsElapsed).reduce((a,b)=>a+b,0);
+                    ytdTarget = d.target.slice(0, monthsElapsed).reduce((a,b)=>a+b,0);
+                    annualTarget = d.target.reduce((a,b)=>a+b,0);
+                    currentStock = d.stock[lastMonthIdx];
+                    ctxLabel = type === 'nasional' ? 'Nasional' : 'Distribusi Nasional';
+
                 } else if (type.includes('provinsi')) {
+                    // Recalculate for Province to get precise YTD Target
                     const isDist = type.includes('Dist');
                     const dropdownId = isDist ? 'dropdown-provinsi-dist' : 'dropdown-provinsi';
                     const provName = document.getElementById(dropdownId).value;
-                    const statsSource = isDist ? distStatsGlobal : statsGlobal;
                     
-                    if(!statsSource.provinsi[provName]) { content.innerHTML = "<p>Data Kosong</p>"; return; }
-                    const pData = statsSource.provinsi[provName];
-                    const pct = pData.target > 0 ? (pData.real/pData.target*100).toFixed(1) : 0;
-                    const label = isDist ? 'Distribusi' : 'Penjualan';
-                    ctxData = `DATA: ${label} Provinsi ${provName}, Produk ${prod}, Sektor ${sec}, Tahun ${year}. Realisasi: ${formatNumber(pData.real)} Ton. Alokasi: ${formatNumber(pData.target)} Ton. Capaian: ${pct}%.`;
+                    if(!provName) { content.innerHTML = "<p>Pilih provinsi dulu.</p>"; return; }
+                    ctxLabel = (isDist ? 'Distribusi ' : 'Penjualan ') + provName;
+
+                    // Iterate raw data
+                    state.rawData.forEach(r => {
+                        if (r.TAHUN !== year || r.PROVINSI !== provName) return;
+                        
+                        // Filter Sector
+                        let isSectorMatch = (sec === 'SUBSIDI') ? r.SEKTOR.includes('SUBSIDI') : r.SEKTOR.includes('RETAIL');
+                        if (!isSectorMatch) return;
+
+                        // Filter Product
+                        let prodKey = '';
+                        if (r.PRODUK.includes('UREA') || r.PRODUK.includes('NITREA')) prodKey = 'UREA';
+                        else if (r.PRODUK.includes('NPK') || r.PRODUK.includes('PHONSKA')) prodKey = 'NPK';
+                        if (prodKey !== prod) return;
+
+                        // Identify Row Type
+                        let isReal = false;
+                        let isTarget = false;
+                        let isStock = false;
+
+                        if (isDist) {
+                            if (r.JENIS === 'REALISASI DISTRIBUSI') isReal = true;
+                            else if (r.JENIS === 'ALOKASI' || r.JENIS === 'RKO') isTarget = true;
+                        } else {
+                            if (r.KATEGORI === 'PENJUALAN' && r.JENIS === 'REALISASI') isReal = true;
+                            else if (r.JENIS === 'ALOKASI' || r.JENIS === 'RKO') isTarget = true;
+                        }
+                        
+                        if (r.JENIS.includes('STOK') || r.JENIS.includes('STOCK') || r.JENIS.includes('AKTUAL') || r.KATEGORI === 'STOK') {
+                            isStock = true;
+                        }
+
+                        if (isReal && r.BULAN <= lastMonthIdx) {
+                            ytdReal += r.TONASE;
+                        }
+                        if (isTarget) {
+                            annualTarget += r.TONASE;
+                            if (r.BULAN <= lastMonthIdx) {
+                                ytdTarget += r.TONASE;
+                            }
+                        }
+                        if (isStock && r.BULAN === lastMonthIdx) {
+                            currentStock += r.TONASE;
+                        }
+                    });
                 }
 
-                // 2. Get Qualitative Context from INFO_AI
-                // Filter infoAiData based on context
+                // Calculations
+                const pctYtd = ytdTarget > 0 ? (ytdReal / ytdTarget * 100).toFixed(1) : 0;
+                const pctAnnual = annualTarget > 0 ? (ytdReal / annualTarget * 100).toFixed(1) : 0;
+
+                // --- 3. PROMPT GENERATION ---
+                const ctxData = `
+                    DATA: ${ctxLabel}, Produk ${prod}, Sektor ${sec}, Tahun ${year}.
+                    - Realisasi Kumulatif (s.d ${currMonthName}): ${formatNumber(ytdReal)} Ton.
+                    - Target Kumulatif (s.d ${currMonthName}): ${formatNumber(ytdTarget)} Ton.
+                    - Target Tahunan: ${formatNumber(annualTarget)} Ton.
+                    - Stok Saat Ini (Akhir ${currMonthName}): ${formatNumber(currentStock)} Ton.
+                    - % Capaian vs Target Kumulatif: ${pctYtd}%.
+                    - % Capaian vs Target Tahunan: ${pctAnnual}%.
+                `;
+
+                // ... External Info Logic (Keep existing) ...
                 let relevantInfo = infoAiData.filter(item => {
-                    // Normalize inputs
                     const iYear = parseInt(item.TAHUN);
                     const iSektor = item.SEKTOR ? item.SEKTOR.toUpperCase() : 'SEMUA';
                     const iProduk = item.PRODUK ? item.PRODUK.toUpperCase() : 'SEMUA';
@@ -1775,51 +1840,49 @@
                     if (iStatus !== 'AKTIF') return false;
                     if (iYear !== year) return false;
                     
-                    // Logic: "SEMUA" matches everything, otherwise exact match
                     const matchSektor = (iSektor === 'SEMUA' || iSektor === sec);
                     const matchProduk = (iProduk === 'SEMUA' || iProduk === prod);
                     
-                    // Province matching depends on context type
                     let matchProv = true;
                     if (type.includes('provinsi')) {
                          const currentProv = document.getElementById(type.includes('Dist') ? 'dropdown-provinsi-dist' : 'dropdown-provinsi').value;
                          matchProv = (iProv === 'SEMUA' || iProv === currentProv);
                     } else {
-                         // For Nasional charts, we include National news ('SEMUA' province) or maybe major issues
                          matchProv = (iProv === 'SEMUA'); 
                     }
 
                     return matchSektor && matchProduk && matchProv;
                 });
 
-                // Format relevant info for prompt
                 let contextString = "";
                 if (relevantInfo.length > 0) {
-                    contextString = "\n\nFAKTOR EKSTERNAL (INFO TERKINI):";
+                    contextString = "\n\nFAKTOR EKSTERNAL / BERITA:";
                     relevantInfo.forEach(info => {
                         contextString += `\n- [${info.KATEGORI_AI}] ${info.INFORMASI}`;
                     });
                 }
 
+                // Prompt
                 const promptText = `
-                    Peran: Senior Data Analyst Logistik & Penjualan Pupuk.
+                    Peran: Senior Data Analyst.
                     
-                    Data Kuantitatif:
+                    Data Kinerja:
                     ${ctxData}
                     
-                    Faktor Eksternal (Jika ada):
-                    ${contextString || "Tidak ada info tambahan."}
+                    Info Pendukung:
+                    ${contextString || "Tidak ada isu khusus."}
                     
                     Instruksi:
-                    Berikan 3 poin analisis ringkas (Executive Summary) berdasarkan data di atas.
-                    Gunakan format daftar (bullet points) agar mudah dibaca.
-                    Hanya sebutkan cuaca/kebijakan jika ada di data "Faktor Eksternal".
+                    1. Analisa performa berdasarkan capaian terhadap Target Kumulatif (s.d bulan ini) dan Ketersediaan Stok.
+                    2. Berikan 3 poin insight: Status, Faktor Penyebab, dan Rekomendasi Aksi.
+                    3. ATURAN PENTING: Gunakan tepat 2 kalimat per poin.
+                    4. FORMAT OUTPUT: Gunakan format "Label: Isi" (Tanpa tanda kurung siku).
                     
-                    Format Output (HTML saja, tanpa markdown \`\`\`):
-                    <ul style="margin:0; padding-left:1.2em">
-                        <li>Poin 1...</li>
-                        <li>Poin 2...</li>
-                        <li>Poin 3...</li>
+                    Format HTML (Body Only):
+                    <ul style="margin:0; padding-left:1.2em; font-size:12px;">
+                        <li style="margin-bottom:6px;"><strong>Status:</strong> (Analisa capaian & posisi stok aman/tidak).</li>
+                        <li style="margin-bottom:6px;"><strong>Faktor:</strong> (Penyebab utama dari data/info).</li>
+                        <li style="margin-bottom:6px;"><strong>Aksi:</strong> (Rekomendasi strategis).</li>
                     </ul>
                 `;
 
