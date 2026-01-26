@@ -999,7 +999,8 @@
                     if (r.BULAN >= 0) {
                         if (r.KATEGORI === 'PENJUALAN' && r.JENIS === 'REALISASI') mReal[r.BULAN] += r.TONASE;
                         else if (r.JENIS === 'ALOKASI' || r.JENIS === 'RKO') mTarget[r.BULAN] += r.TONASE;
-                        else if (r.JENIS.includes('STOK') || r.JENIS.includes('STOCK')) mStock[r.BULAN] += r.TONASE;
+                        // UPDATED HERE: Added condition for AKTUAL and KATEGORI=STOK
+                        else if (r.JENIS.includes('STOK') || r.JENIS.includes('STOCK') || r.JENIS.includes('AKTUAL') || r.KATEGORI === 'STOK') mStock[r.BULAN] += r.TONASE;
                     }
                 });
 
@@ -1036,7 +1037,14 @@
                             legend: { display: true, labels: { usePointStyle: true, pointStyle: 'rect', boxWidth: 8, padding: 20 } },
                             tooltip: { backgroundColor: 'rgba(33, 33, 33, 0.95)', titleColor: '#ececec', bodyColor: '#b3b3b3', borderColor: '#424242', borderWidth: 1, callbacks: { label: (c) => c.dataset.label + ': ' + formatNumber(c.raw) } }
                         },
-                        scales: { x: { grid: { display: false } }, y: { grid: { color: state.theme==='dark'?'#333':'#e5e7eb' }, beginAtZero: true } }
+                        scales: { 
+                            x: { grid: { display: false } }, 
+                            y: { 
+                                grid: { color: state.theme==='dark'?'#333':'#e5e7eb' }, 
+                                beginAtZero: true,
+                                ticks: { maxTicksLimit: 5, callback: (v) => v===0?null:(v>=1000?(v/1000)+' rb':v) }
+                            } 
+                        }
                     }
                 });
             };
@@ -1151,8 +1159,8 @@
                         else if (r.JENIS === 'ALOKASI' || r.JENIS === 'RKO') {
                              mTarget[r.BULAN] += r.TONASE;
                         }
-                        // Stock Data
-                        else if (r.JENIS.includes('STOK') || r.JENIS.includes('STOCK')) {
+                        // Stock Data - UPDATED HERE ALSO
+                        else if (r.JENIS.includes('STOK') || r.JENIS.includes('STOCK') || r.JENIS.includes('AKTUAL') || r.KATEGORI === 'STOK') {
                              mStock[r.BULAN] += r.TONASE;
                         }
                     }
@@ -1210,7 +1218,15 @@
                                 callbacks: { label: (c) => c.dataset.label + ': ' + new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(c.raw) } 
                             }
                         },
-                        scales: { x: { grid: { display: false }, stacked: true }, y: { grid: { color: state.theme==='dark'?'#333':'#e5e7eb' }, beginAtZero: true, stacked: true } }
+                        scales: { 
+                            x: { grid: { display: false }, stacked: true }, 
+                            y: { 
+                                grid: { color: state.theme==='dark'?'#333':'#e5e7eb' }, 
+                                beginAtZero: true, 
+                                stacked: true,
+                                ticks: { maxTicksLimit: 5, callback: (v) => v===0?null:(v>=1000?(v/1000)+' rb':v) }
+                            } 
+                        }
                     }
                 });
             };
@@ -1449,7 +1465,8 @@
                     // Jenis Data
                     let isReal = (r.KATEGORI === 'PENJUALAN' && r.JENIS === 'REALISASI');
                     let isTarget = r.JENIS === 'ALOKASI' || r.JENIS === 'RKO'; 
-                    let isStock = r.JENIS.includes('STOK') || r.JENIS.includes('STOCK') || r.JENIS.includes('AKTUAL');
+                    // UPDATED HERE: Added condition for AKTUAL and KATEGORI=STOK
+                    let isStock = r.JENIS.includes('STOK') || r.JENIS.includes('STOCK') || r.JENIS.includes('AKTUAL') || r.KATEGORI === 'STOK';
 
                     // Data Tahun Ini
                     if (r.TAHUN === selectedYear) {
