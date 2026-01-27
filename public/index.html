@@ -5,7 +5,7 @@
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard APP Bisa - Revisi Growth YTD</title>
+    <title>Dashboard APP Bisa - Revisi Growth YTD & AI Insight</title>
 
     <!-- FAVICON & ICONS -->
     <meta property="og:title" content="Dashboard APP Bisa">
@@ -1726,8 +1726,9 @@
                     const salesDistData = [];
                     const aiData = [];
 
+                    // REVISI SPLIT DATA BERDASARKAN KOLOM 'INFORMASI'
                     data.forEach(row => {
-                        if (row.INFORMASI && row.KATEGORI_AI) { 
+                        if (row.INFORMASI) { 
                              aiData.push(row);
                         } else {
                              salesDistData.push(row);
@@ -1873,26 +1874,30 @@
                     - % Capaian vs Alokasi Tahunan: ${pctAnnual}%.
                 `;
 
-                // ... External Info Logic (Keep existing) ...
+                // REVISI LOGIKA FILTER AI INSIGHT (UPDATED - SUPPORT PREV YEAR)
                 let relevantInfo = infoAiData.filter(item => {
+                    // Cek Status (Harus 'AKTIF')
+                    const iStatus = item.STATUS ? item.STATUS.toUpperCase().trim() : '';
+                    if (iStatus !== 'AKTIF') return false;
+
                     const iYear = parseInt(item.TAHUN);
                     const iSektor = item.SEKTOR ? item.SEKTOR.toUpperCase() : 'SEMUA';
                     const iProduk = item.PRODUK ? item.PRODUK.toUpperCase() : 'SEMUA';
                     const iProv = item.PROVINSI ? toTitleCase(item.PROVINSI) : 'SEMUA';
-                    const iStatus = item.STATUS ? item.STATUS.toUpperCase() : 'AKTIF';
-
-                    if (iStatus !== 'AKTIF') return false;
-                    if (iYear !== year) return false;
                     
+                    // REVISI: Ambil Tahun Ini ATAU Tahun Lalu (untuk konteks Growth/Sejarah)
+                    if (iYear !== year && iYear !== (year - 1)) return false;
+
                     const matchSektor = (iSektor === 'SEMUA' || iSektor === sec);
                     const matchProduk = (iProduk === 'SEMUA' || iProduk === prod);
                     
                     let matchProv = true;
                     if (type.includes('provinsi')) {
                          const currentProv = document.getElementById(type.includes('Dist') ? 'dropdown-provinsi-dist' : 'dropdown-provinsi').value;
-                         matchProv = (iProv === 'SEMUA' || iProv === currentProv);
+                         matchProv = (iProv === 'SEMUA' || iProv === currentProv || iProv.toUpperCase() === 'NASIONAL');
                     } else {
-                         matchProv = (iProv === 'SEMUA'); 
+                         // Nasional view usually general info
+                         matchProv = (iProv === 'SEMUA' || iProv.toUpperCase() === 'NASIONAL'); 
                     }
 
                     return matchSektor && matchProduk && matchProv;
@@ -1901,8 +1906,14 @@
                 let contextString = "";
                 if (relevantInfo.length > 0) {
                     contextString = "\n\nFAKTOR EKSTERNAL / BERITA:";
+                    // Sort by Year then Month (Assuming info is sequential)
+                    relevantInfo.sort((a,b) => a.TAHUN - b.TAHUN);
+                    
                     relevantInfo.forEach(info => {
-                        contextString += `\n- [${info.KATEGORI_AI}] ${info.INFORMASI}`;
+                        const cat = info.KATEGORI || 'Info';
+                        // REVISI: Tampilkan Tahun agar AI tahu konteks waktu
+                        const labelWaktu = `(${info.TAHUN} ${info.BULAN || ''})`; 
+                        contextString += `\n- [${cat}] ${labelWaktu} ${info.INFORMASI}`;
                     });
                 }
 
@@ -1913,7 +1924,7 @@
                     Data Kinerja:
                     ${ctxData}
                     
-                    Info Pendukung:
+                    Info Pendukung (Info tahun lalu disertakan sebagai konteks historis/penyebab):
                     ${contextString || "Tidak ada isu khusus."}
                     
                     Instruksi:
