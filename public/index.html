@@ -828,7 +828,8 @@
                 return parseFloat(s) || 0;
             };
 
-            const formatNumber = (num) => new Intl.NumberFormat('id-ID').format(num);
+            // UPDATE: Removed decimal places (maximumFractionDigits: 0)
+            const formatNumber = (num) => new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(num);
 
             const hexToRgbA = (hex, alpha) => {
                 let c; if(/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)){ c= hex.substring(1).split(''); if(c.length== 3){ c= [c[0], c[0], c[1], c[1], c[2], c[2]]; } c= '0x'+c.join(''); return 'rgba('+[(c>>16)&255, (c>>8)&255, c&255].join(',')+','+alpha+')'; } return hex;
@@ -1706,52 +1707,101 @@
                 updateDashboard(); 
             };
 
+            // OPTIMIZED FETCH DATA WITH CACHING
             const fetchData = async () => {
                 const loader = document.getElementById('loader');
-                if (loader) loader.style.display = 'flex';
                 
-                setTimeout(() => { if(loader) loader.style.display = 'none'; }, 10000);
+                // 1. OPTIMASI: Cek Cache Lokal Dulu (Render Instan)
+                const cachedDataStr = localStorage.getItem('local_raw_data');
+                let hasCache = false;
+
+                if (cachedDataStr) {
+                    try {
+                        const cachedData = JSON.parse(cachedDataStr);
+                        if (Array.isArray(cachedData) && cachedData.length > 0) {
+                            console.log("Menggunakan data cache lokal sementara...");
+                            
+                            // Pisahkan data cache untuk render awal
+                            const salesDistDataCache = [];
+                            const aiDataCache = [];
+                            cachedData.forEach(row => {
+                                if (row.INFORMASI) aiDataCache.push(row);
+                                else salesDistDataCache.push(row);
+                            });
+                            
+                            infoAiData = aiDataCache;
+                            processData(salesDistDataCache);
+                            
+                            // Matikan loader segera karena data cache sudah tampil
+                            if (loader) loader.style.display = 'none';
+                            hasCache = true;
+                        }
+                    } catch (e) {
+                        console.error("Cache error", e);
+                        localStorage.removeItem('local_raw_data');
+                    }
+                }
+
+                // Jika tidak ada cache, loader wajib muncul
+                if (!hasCache && loader) loader.style.display = 'flex';
+
+                // Safety timeout jika fetch macet (hanya berguna jika tidak ada cache)
+                if (!hasCache) {
+                    setTimeout(() => { if(loader) loader.style.display = 'none'; }, 15000);
+                }
 
                 try {
+                    // 2. Fetch Data Baru dari Google Sheets (Background process jika cache ada)
                     const res = await fetch(API_URL);
                     const data = await res.json();
+                    
                     if (!Array.isArray(data)) throw new Error("Format data salah");
                     
+                    // Cek Hash/Perubahan Data
                     const totalTonase = data.reduce((acc, row) => acc + (parseFloat(row.TONASE)||0), 0);
                     const currentHash = data.length + "_" + totalTonase;
 
-                    if (currentHash !== state.lastDataHash) {
+                    // Jika data berbeda dengan hash terakhir atau belum ada cache, update!
+                    if (currentHash !== state.lastDataHash || !hasCache) {
+                        console.log("Data baru ditemukan, melakukan update...");
+                        
                         const now = new Date();
-                        const formattedDate = `Update: ${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+                        const formattedDate = `Update: ${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                        
                         state.lastUpdateDate = formattedDate;
                         state.lastDataHash = currentHash;
+                        
+                        // Simpan Metadata
                         localStorage.setItem('last_update_date', formattedDate);
                         localStorage.setItem('last_data_hash', currentHash);
+                        
+                        // 3. OPTIMASI: Simpan Data Mentah ke LocalStorage
+                        try {
+                            localStorage.setItem('local_raw_data', JSON.stringify(data));
+                        } catch (quotaExceeded) {
+                            console.warn("Data terlalu besar untuk cache lokal", quotaExceeded);
+                        }
+
                         const headerText = document.getElementById('header-update-text');
                         if(headerText) headerText.innerText = formattedDate;
+
+                        // Proses Ulang Data Baru
+                        const salesDistData = [];
+                        const aiData = [];
+                        data.forEach(row => {
+                            if (row.INFORMASI) aiData.push(row);
+                            else salesDistData.push(row);
+                        });
+
+                        infoAiData = aiData; 
+                        processData(salesDistData); 
                     } else {
-                         const headerText = document.getElementById('header-update-text');
-                         if(headerText) headerText.innerText = state.lastUpdateDate;
+                        console.log("Data sudah up-to-date.");
                     }
-
-                    const salesDistData = [];
-                    const aiData = [];
-
-                    // REVISI SPLIT DATA BERDASARKAN KOLOM 'INFORMASI'
-                    data.forEach(row => {
-                        if (row.INFORMASI) { 
-                             aiData.push(row);
-                        } else {
-                             salesDistData.push(row);
-                        }
-                    });
-
-                    infoAiData = aiData; 
-                    processData(salesDistData); 
 
                 } catch (err) {
                     console.error("Fetch Error:", err);
-                    alert("Gagal mengambil data: " + err.message);
+                    if (!hasCache) alert("Gagal mengambil data: " + err.message); // Hanya alert jika user melihat layar kosong
                 } finally {
                     if(loader) loader.style.display = 'none';
                 }
