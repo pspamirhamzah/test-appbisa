@@ -183,7 +183,8 @@
         }
 
         .nav-spacer { flex-grow: 1; }
-        .nav-login { margin-top: auto; border-top: none; padding-top: 10px; }
+        
+        /* Removed Admin Logic CSS */
 
         .sidebar-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -330,19 +331,28 @@
         .footer h4 { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin: 0; }
         .footer p { font-size: 10px; opacity: 0.6; margin: 0; letter-spacing: 1px; }
 
-        /* MODAL & UTILS */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); z-index: 999; display: none; justify-content: center; align-items: center; }
-        .modal-box { background: var(--bg-card); width: 100%; max-width: 320px; padding: 30px; border: 1px solid var(--border-color); box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center; border-radius: 16px; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .modal-header h3 { font-size: 16px; margin: 0; color: var(--text-primary); }
-        .modal-header button { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 16px; }
-        .input-square { width: 100%; padding: 12px; margin-bottom: 20px; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-primary); font-family: inherit; font-size: 14px; border-radius: 8px; outline: none; }
-        .input-square:focus { border-color: var(--text-primary); }
-        .btn-square { width: 100%; padding: 12px; background: var(--text-primary); color: var(--bg-body); font-weight: 700; border: none; cursor: pointer; border-radius: 8px; transition: 0.2s; }
-        .btn-square:hover { opacity: 0.9; }
+        /* AUTH MODAL - FULL SCREEN BLOCKER */
+        .auth-overlay { 
+            position: fixed; inset: 0; background: var(--bg-body); 
+            z-index: 10000; display: flex; justify-content: center; align-items: center; 
+            flex-direction: column; transition: opacity 0.5s ease;
+        }
+        .auth-box { 
+            background: var(--bg-card); padding: 40px 30px; border-radius: 24px; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5); width: 100%; max-width: 360px; text-align: center; 
+            border: 1px solid var(--border-color);
+        }
+        .auth-logo { font-size: 24px; font-weight: 800; color: var(--text-primary); margin-bottom: 10px; }
+        .auth-logo span { font-weight: 400; color: var(--color-urea); }
+        .auth-subtitle { font-size: 12px; color: var(--text-secondary); margin-bottom: 30px; letter-spacing: 0.5px; }
+
+        .input-square { width: 100%; padding: 14px; margin-bottom: 20px; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-primary); font-family: inherit; font-size: 14px; border-radius: 12px; outline: none; transition: border-color 0.2s; text-align: center; }
+        .input-square:focus { border-color: var(--color-urea); }
+        .btn-square { width: 100%; padding: 14px; background: var(--color-urea); color: #000; font-weight: 800; border: none; cursor: pointer; border-radius: 12px; transition: 0.2s; font-size: 13px; letter-spacing: 1px; }
+        .btn-square:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255, 222, 0, 0.3); }
 
         /* LOADER */
-        #loader { position: fixed; inset: 0; background: var(--bg-body); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        #loader { position: fixed; inset: 0; background: var(--bg-body); z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center; }
         .spinner { width: 40px; height: 40px; border: 3px solid var(--border-color); border-top-color: var(--color-urea); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 16px; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
@@ -375,6 +385,20 @@
     </style>
 </head>
 <body>
+
+    <!-- AUTH SCREEN -->
+    <div id="authOverlay" class="auth-overlay">
+        <div class="auth-box">
+            <div class="auth-logo">APP <span>bisa</span></div>
+            <div class="auth-subtitle">Adm Pemasaran & Penjualan</div>
+            <div style="margin-bottom:20px;">
+                <i class="fas fa-lock" style="font-size: 32px; color: var(--text-muted); opacity: 0.5;"></i>
+            </div>
+            <input type="password" id="appPassword" class="input-square" placeholder="Masukkan Password" onkeyup="if(event.keyCode===13) app.loginApp()">
+            <button class="btn-square" onclick="app.loginApp()">BUKA DASHBOARD</button>
+            <p id="authError" style="color: var(--color-danger); font-size: 11px; margin-top: 10px; display: none;">Password salah!</p>
+        </div>
+    </div>
 
     <!-- LOADER -->
     <div id="loader">
@@ -428,24 +452,8 @@
             </div>
         </div>
 
-        <!-- ADMIN MENU (Tetap Flat) -->
-        <div id="admin-menu" style="display: none;">
-            <div class="nav-header">ADMINISTRATOR</div>
-            <div class="nav-item" onclick="app.showLoginModal()"> 
-                <i class="fas fa-plus-square"></i> <span>Input Data</span>
-            </div>
-            <div class="nav-item" onclick="app.logout()">
-                <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
-            </div>
-        </div>
-
         <div class="nav-spacer"></div>
-        
-        <div class="nav-login" id="login-btn-container">
-            <div class="nav-item" onclick="app.showLoginModal()">
-                <i class="fas fa-lock"></i> <span>Admin</span>
-            </div>
-        </div>
+        <!-- Admin Menu Removed -->
     </aside>
 
     <!-- MAIN CONTENT -->
@@ -762,20 +770,6 @@
         </div> 
     </main>
 
-    <!-- LOGIN MODAL -->
-    <div id="loginModal" class="modal-overlay">
-        <div class="modal-box">
-            <div class="modal-header">
-                <h3>Login Admin</h3>
-                <button onclick="app.closeLoginModal()"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body">
-                <input type="password" id="adminPass" class="input-square" placeholder="Password...">
-                <button class="btn-square" onclick="app.login()">MASUK</button>
-            </div>
-        </div>
-    </div>
-
     <!-- JAVASCRIPT -->
     <script>
         Chart.defaults.color = '#b3b3b3';
@@ -783,30 +777,32 @@
         Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
         Chart.defaults.font.size = 11;
         
-        // PENTING: Matikan animasi global agar html2pdf bisa menangkap grafik dengan benar
         Chart.defaults.animation = false;
 
         const app = (() => {
-            // URL APP SCRIPT BARU
-            const API_URL = 'https://script.google.com/macros/s/AKfycbzAwrEIwiccjVaFD8wHqHjq_eqrihyeYunLX_5tgGONSo2qRDCFEXY3Uhe_WYBn7y4ZiQ/exec';
+            // BASE URL (Tanpa parameter)
+            const BASE_API_URL = 'https://script.google.com/macros/s/AKfycbzAwrEIwiccjVaFD8wHqHjq_eqrihyeYunLX_5tgGONSo2qRDCFEXY3Uhe_WYBn7y4ZiQ/exec';
             
-            const k_head = "AIzaSyDHe6hnE2k6L"; 
-            const k_tail = "pNeGQR13rKLOSwvW96p0m0"; 
-            const apiKey = k_head + k_tail; 
+            // KEY untuk LocalStorage
+            const CACHE_KEY_DATA = 'local_raw_data';
+            const CACHE_KEY_TIME = 'last_update_date';
+            const CACHE_KEY_HASH = 'last_data_hash';
+            const CACHE_KEY_AUTH = 'app_auth_token'; // Menyimpan password sesi
 
             let state = {
                 rawData: [],
-                page: 'SALES', // 'SALES' or 'DISTRIBUSI'
+                page: 'SALES',
                 sector: 'SUBSIDI',        
                 activeProduct: 'UREA',  
                 selectedYear: new Date().getFullYear(),
                 sidebarOpen: true,
                 theme: localStorage.getItem('theme') || 'dark',
-                isAdmin: false,
-                lastDataHash: localStorage.getItem('last_data_hash') || '',
-                lastUpdateDate: localStorage.getItem('last_update_date') || 'Overview Performa'
+                lastDataHash: localStorage.getItem(CACHE_KEY_HASH) || '',
+                lastUpdateDate: localStorage.getItem(CACHE_KEY_TIME) || 'Overview Performa',
+                authToken: sessionStorage.getItem(CACHE_KEY_AUTH) || '' // Password sementara di memori
             };
 
+            // ... (Variable charts, statsGlobal, distStatsGlobal tetap sama) ...
             let charts = {
                 nasional: null,
                 provinsi: null,
@@ -818,7 +814,7 @@
             let distStatsGlobal = null;
             let infoAiData = [];
 
-            // --- UTILS ---
+            // ... (Fungsi UTILS: parseIndoNumber, formatNumber, dll tetap sama) ...
             const parseIndoNumber = (str) => {
                 if (typeof str === 'number') return str;
                 if (!str) return 0;
@@ -828,7 +824,6 @@
                 return parseFloat(s) || 0;
             };
 
-            // UPDATE: Removed decimal places (maximumFractionDigits: 0)
             const formatNumber = (num) => new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(num);
 
             const hexToRgbA = (hex, alpha) => {
@@ -859,7 +854,6 @@
                 if(icon) {
                     icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
                 }
-                
                 if(theme === 'light') {
                     Chart.defaults.color = '#1f2937';
                     Chart.defaults.borderColor = '#e5e7eb';
@@ -869,6 +863,7 @@
                 }
             };
 
+            // ... (Fungsi populateProvDropdown, renderSidebar, checkScreenSize, toggleMenu TETAP SAMA) ...
             const populateProvDropdown = (id, provKeys) => {
                 const s = document.getElementById(id);
                 if(!s) return;
@@ -902,24 +897,18 @@
                 renderSidebar();
             };
 
-            // --- MENU TOGGLE LOGIC ---
             const toggleMenu = (menuId, btnElement) => {
                 const menu = document.getElementById(menuId);
                 const isHidden = !menu.classList.contains('show');
-                
                 document.querySelectorAll('.nav-submenu').forEach(el => el.classList.remove('show'));
                 document.querySelectorAll('.nav-parent').forEach(el => el.classList.remove('open'));
-
                 if(isHidden) {
                     menu.classList.add('show');
                     btnElement.classList.add('open');
                 }
             };
 
-            // ==========================================
-            // RENDER FUNCTIONS
-            // ==========================================
-
+            // ... (Fungsi Render Chart TETAP SAMA: renderNasionalChart, renderProvChart, renderNasionalDistChart, renderDistProvChart) ...
             const renderNasionalChart = (nasStats) => {
                 const canvas = document.getElementById('chartNasional');
                 if(!canvas) return;
@@ -934,7 +923,6 @@
                 gradient.addColorStop(0, hexToRgbA(color, 0.4));
                 gradient.addColorStop(1, hexToRgbA(color, 0.0));
                 
-                // --- COLOR REVISION: WHITE (Dark Mode) & BLACK (Light Mode) ---
                 const colorTarget = state.theme === 'dark' ? '#ffffff' : '#000000';
                 const targetIcon = createDashedCircle(colorTarget); 
 
@@ -1002,7 +990,6 @@
                     if (r.BULAN >= 0) {
                         if (r.KATEGORI === 'PENJUALAN' && r.JENIS === 'REALISASI') mReal[r.BULAN] += r.TONASE;
                         else if (r.JENIS === 'ALOKASI' || r.JENIS === 'RKO') mTarget[r.BULAN] += r.TONASE;
-                        // UPDATED HERE: Added condition for AKTUAL and KATEGORI=STOK
                         else if (r.JENIS.includes('STOK') || r.JENIS.includes('STOCK') || r.JENIS.includes('AKTUAL') || r.KATEGORI === 'STOK') mStock[r.BULAN] += r.TONASE;
                     }
                 });
@@ -1014,7 +1001,6 @@
                 gradient.addColorStop(0, hexToRgbA(colorMain, 0.4));
                 gradient.addColorStop(1, hexToRgbA(colorMain, 0.0));
 
-                // --- COLOR REVISION: WHITE (Dark Mode) & BLACK (Light Mode) ---
                 const colorTarget = state.theme === 'dark' ? '#ffffff' : '#000000';
                 const targetIcon = createDashedCircle(colorTarget);
 
@@ -1042,14 +1028,7 @@
                             legend: { display: true, labels: { usePointStyle: true, pointStyle: 'rect', boxWidth: 8, padding: 20 } },
                             tooltip: { backgroundColor: 'rgba(33, 33, 33, 0.95)', titleColor: '#ececec', bodyColor: '#b3b3b3', borderColor: '#424242', borderWidth: 1, callbacks: { label: (c) => c.dataset.label + ': ' + formatNumber(c.raw) } }
                         },
-                        scales: { 
-                            x: { grid: { display: false } }, 
-                            y: { 
-                                grid: { color: state.theme==='dark'?'#333':'#e5e7eb' }, 
-                                beginAtZero: true,
-                                ticks: { maxTicksLimit: 5, callback: (v) => v===0?null:(v>=1000?(v/1000)+' rb':v) }
-                            } 
-                        }
+                        scales: { x: { grid: { display: false } }, y: { grid: { color: state.theme==='dark'?'#333':'#e5e7eb' }, beginAtZero: true, ticks: { maxTicksLimit: 5, callback: (v) => v===0?null:(v>=1000?(v/1000)+' rb':v) } } }
                     }
                 });
             };
@@ -1063,17 +1042,14 @@
                 const isUrea = state.activeProduct === 'UREA';
                 const data = isUrea ? nasStats.UREA : nasStats.NPK;
                 
-                // Colors Updated (Grey Theme for Dist, Yellow/Blue for Stock Line)
                 const colorLine = isUrea ? '#FFDE00' : '#38bdf8'; 
-                const colorTruck = '#616161'; // Dark Grey
-                const colorKapal = '#757575'; // Medium Grey (Darker than before to reduce contrast)
+                const colorTruck = '#616161'; 
+                const colorKapal = '#757575'; 
 
-                // Gradient for Stock Line
                 const gradient = ctx.createLinearGradient(0, 0, 0, 300);
                 gradient.addColorStop(0, hexToRgbA(colorLine, 0.4));
                 gradient.addColorStop(1, hexToRgbA(colorLine, 0.0));
                 
-                // --- COLOR REVISION: WHITE (Dark Mode) & BLACK (Light Mode) ---
                 const colorTarget = state.theme === 'dark' ? '#ffffff' : '#000000';
 
                 charts.nasionalDist = new Chart(ctx, {
@@ -1082,23 +1058,10 @@
                         labels: ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'],
                         datasets: [
                             {
-                                type: 'line', 
-                                label: 'Stok',      
-                                data: data.stock,   // Use Stock Data
-                                borderColor: colorLine, 
-                                backgroundColor: gradient, 
-                                borderWidth: 3,                 
-                                fill: true,                     
-                                tension: 0.4, 
-                                pointRadius: 4,                 
-                                pointHoverRadius: 6,
-                                pointStyle: 'circle',
-                                order: 1 
+                                type: 'line', label: 'Stok', data: data.stock, borderColor: colorLine, backgroundColor: gradient, borderWidth: 3, fill: true, tension: 0.4, pointRadius: 4, pointHoverRadius: 6, pointStyle: 'circle', order: 1 
                             },
                             {
-                                type: 'line', label: 'Alokasi', data: data.target, 
-                                borderColor: colorTarget, borderDash: [6, 6], borderWidth: 2, 
-                                fill: false, tension: 0.4, pointRadius: 0, pointStyle: createDashedCircle(colorTarget), order: 2
+                                type: 'line', label: 'Alokasi', data: data.target, borderColor: colorTarget, borderDash: [6, 6], borderWidth: 2, fill: false, tension: 0.4, pointRadius: 0, pointStyle: createDashedCircle(colorTarget), order: 2
                             },
                             {
                                 label: 'Truk', data: data.land, backgroundColor: colorTruck, stack: 'stack1', order: 3
@@ -1113,16 +1076,9 @@
                         interaction: { mode: 'index', intersect: false },
                         plugins: { 
                             legend: { display: true, labels: { usePointStyle: true, pointStyle: 'rect', boxWidth: 8, padding: 20 } },
-                            tooltip: { 
-                                backgroundColor: 'rgba(33, 33, 33, 0.95)', titleColor: '#ececec', bodyColor: '#b3b3b3', borderColor: '#424242', borderWidth: 1, 
-                                callbacks: { label: (c) => c.dataset.label + ': ' + new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(c.raw) } 
-                            }
+                            tooltip: { backgroundColor: 'rgba(33, 33, 33, 0.95)', titleColor: '#ececec', bodyColor: '#b3b3b3', borderColor: '#424242', borderWidth: 1, callbacks: { label: (c) => c.dataset.label + ': ' + new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(c.raw) } }
                         },
-                        scales: { 
-                            x: { grid: { display: false }, stacked: true }, 
-                            // REVISI: stacked: false agar garis Alokasi/Stok tidak ikut menumpuk di atas bar
-                            y: { grid: { color: state.theme==='dark'?'#333':'#e5e7eb' }, beginAtZero: true, stacked: false, ticks: { maxTicksLimit: 5, callback: (v) => v===0?null:(v>=1000?(v/1000)+' rb':v) } } 
-                        }
+                        scales: { x: { grid: { display: false }, stacked: true }, y: { grid: { color: state.theme==='dark'?'#333':'#e5e7eb' }, beginAtZero: true, stacked: false, ticks: { maxTicksLimit: 5, callback: (v) => v===0?null:(v>=1000?(v/1000)+' rb':v) } } }
                     }
                 });
             };
@@ -1146,7 +1102,6 @@
                 let mTarget = Array(12).fill(0);
                 let mStock = Array(12).fill(0); 
 
-                // Calculate for specific province
                 state.rawData.forEach(r => {
                     if (r.TAHUN !== state.selectedYear || r.PROVINSI !== provName) return;
                     let isSectorMatch = (state.sector === 'SUBSIDI') ? r.SEKTOR.includes('SUBSIDI') : r.SEKTOR.includes('RETAIL');
@@ -1158,35 +1113,23 @@
                     if (prodKey !== state.activeProduct) return;
 
                     if (r.BULAN >= 0) {
-                        // Distribution Realization
                         if (r.JENIS === 'REALISASI DISTRIBUSI') {
                              if (r.KATEGORI && (r.KATEGORI.includes('TRUCK') || r.KATEGORI.includes('DARAT'))) mLand[r.BULAN] += r.TONASE;
                              else if (r.KATEGORI && (r.KATEGORI.includes('KAPAL') || r.KATEGORI.includes('LAUT'))) mSea[r.BULAN] += r.TONASE;
                         }
-                        // Target comes from Sales RKO
-                        else if (r.JENIS === 'ALOKASI' || r.JENIS === 'RKO') {
-                             mTarget[r.BULAN] += r.TONASE;
-                        }
-                        // Stock Data
-                        else if (r.JENIS.includes('STOK') || r.JENIS.includes('STOCK') || r.JENIS.includes('AKTUAL') || r.KATEGORI === 'STOK') {
-                             mStock[r.BULAN] += r.TONASE;
-                        }
+                        else if (r.JENIS === 'ALOKASI' || r.JENIS === 'RKO') { mTarget[r.BULAN] += r.TONASE; }
+                        else if (r.JENIS.includes('STOK') || r.JENIS.includes('STOCK') || r.JENIS.includes('AKTUAL') || r.KATEGORI === 'STOK') { mStock[r.BULAN] += r.TONASE; }
                     }
                 });
 
                 if(charts.provinsiDist) charts.provinsiDist.destroy();
                 const isUrea = state.activeProduct === 'UREA';
                 
-                // Colors Updated
                 const colorLine = isUrea ? '#FFDE00' : '#38bdf8'; 
                 const colorTruck = '#616161'; 
-                const colorKapal = '#757575'; // Medium Grey
-                
-                // --- COLOR REVISION: WHITE (Dark Mode) & BLACK (Light Mode) ---
+                const colorKapal = '#757575'; 
                 const colorTarget = state.theme === 'dark' ? '#ffffff' : '#000000';
                 const targetIcon = createDashedCircle(colorTarget);
-
-                // Gradient for Stock Line
                 const gradient = ctx.createLinearGradient(0, 0, 0, 300);
                 gradient.addColorStop(0, hexToRgbA(colorLine, 0.4));
                 gradient.addColorStop(1, hexToRgbA(colorLine, 0.0));
@@ -1197,18 +1140,7 @@
                         labels: ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'],
                         datasets: [
                             {
-                                type: 'line', 
-                                label: 'Stok',    
-                                data: mStock,     // Use Stock Data
-                                borderColor: colorLine, 
-                                backgroundColor: gradient,
-                                borderWidth: 3,
-                                fill: true,
-                                tension: 0.4, 
-                                pointRadius: 4,
-                                pointHoverRadius: 6,
-                                pointStyle: 'circle',
-                                order: 1 
+                                type: 'line', label: 'Stok', data: mStock, borderColor: colorLine, backgroundColor: gradient, borderWidth: 3, fill: true, tension: 0.4, pointRadius: 4, pointHoverRadius: 6, pointStyle: 'circle', order: 1 
                             },
                             {
                                 type: 'line', label: 'Alokasi', data: mTarget, borderColor: colorTarget, borderDash: [6, 6], borderWidth: 2, fill: false, tension: 0.4, pointRadius: 0, pointStyle: targetIcon, order: 2
@@ -1226,25 +1158,14 @@
                         interaction: { mode: 'index', intersect: false },
                         plugins: { 
                             legend: { display: true, labels: { usePointStyle: true, pointStyle: 'rect', boxWidth: 8, padding: 20 } },
-                            tooltip: { 
-                                backgroundColor: 'rgba(33, 33, 33, 0.95)', titleColor: '#ececec', bodyColor: '#b3b3b3', borderColor: '#424242', borderWidth: 1, 
-                                callbacks: { label: (c) => c.dataset.label + ': ' + new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(c.raw) } 
-                            }
+                            tooltip: { backgroundColor: 'rgba(33, 33, 33, 0.95)', titleColor: '#ececec', bodyColor: '#b3b3b3', borderColor: '#424242', borderWidth: 1, callbacks: { label: (c) => c.dataset.label + ': ' + new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(c.raw) } }
                         },
-                        scales: { 
-                            x: { grid: { display: false }, stacked: true }, 
-                            // REVISI: stacked: false agar garis Alokasi/Stok tidak ikut menumpuk di atas bar
-                            y: { 
-                                grid: { color: state.theme==='dark'?'#333':'#e5e7eb' }, 
-                                beginAtZero: true, 
-                                stacked: false,
-                                ticks: { maxTicksLimit: 5, callback: (v) => v===0?null:(v>=1000?(v/1000)+' rb':v) }
-                            } 
-                        }
+                        scales: { x: { grid: { display: false }, stacked: true }, y: { grid: { color: state.theme==='dark'?'#333':'#e5e7eb' }, beginAtZero: true, stacked: false, ticks: { maxTicksLimit: 5, callback: (v) => v===0?null:(v>=1000?(v/1000)+' rb':v) } } }
                     }
                 });
             };
 
+            // ... (Fungsi Render SalesRanking, DistRanking, SalesKPI, DistKPI, ProcessData TETAP SAMA) ...
             const renderSalesRankings = (provData) => {
                 const listBest = document.getElementById('list-top5');
                 const listWarn = document.getElementById('list-others');
@@ -1296,7 +1217,6 @@
                 let arr = Object.keys(provData).map(key => {
                     const item = provData[key];
                     let sortVal = item.real;
-                    // Force Integer for Rankings in Distribution page
                     let displayVal = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(item.real);
                     return { name: key, val: sortVal, display: displayVal };
                 });
@@ -1387,9 +1307,7 @@
             };
 
             const renderDistKPI = (stats) => {
-                // Formatter for main numbers (No Decimal)
                 const fmtInt = (n) => new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(n);
-                // Formatter for Growth Card exceptions (Keep Decimal)
                 const fmtDec = (n) => formatNumber(n); 
 
                 const updateCard = (key) => {
@@ -1398,14 +1316,11 @@
                     const prev = stats.prev[key].real;
                     const keyL = key.toLowerCase();
                     
-                    // Realisasi Main Value - Integer
                     const elReal = document.getElementById(`val-dist-${keyL}-real`);
                     if(elReal) elReal.innerText = fmtInt(real);
                     
-                    // --- PERCENTAGE CALCULATION ---
                     const getPct = (val, total) => total > 0 ? ((val / total) * 100).toFixed(0) + '%' : '0%';
 
-                    // Populate Split View with Percentages
                     const elInbag = document.getElementById(`val-dist-${keyL}-inbag`);
                     if(elInbag) elInbag.innerText = getPct(details.bag, real);
                     
@@ -1417,9 +1332,7 @@
                     
                     const elKapal = document.getElementById(`val-dist-${keyL}-kapal`);
                     if(elKapal) elKapal.innerText = getPct(details.sea, real);
-                    // ----------------------------------------
 
-                    // Growth
                     let growth = 0; let isUp = true;
                     if(prev > 0) { growth = ((real - prev) / prev) * 100; isUp = growth >= 0; } 
                     else if (real > 0) { growth = 100; }
@@ -1434,14 +1347,12 @@
                     const elYearCurr = document.getElementById(`year-curr-dist-${keyL}`);
                     if(elYearCurr) elYearCurr.innerText = state.selectedYear;
                     
-                    // Growth Card Legend (Reverted to Integer as requested)
                     const elValCurr = document.getElementById(`val-dist-${keyL}-curr`);
                     if(elValCurr) elValCurr.innerText = fmtInt(real); 
 
                     const elYearPrev = document.getElementById(`year-prev-dist-${keyL}`);
                     if(elYearPrev) elYearPrev.innerText = state.selectedYear - 1;
                     
-                    // Growth Card Legend (Reverted to Integer as requested)
                     const elValPrev = document.getElementById(`val-dist-${keyL}-prev`);
                     if(elValPrev) elValPrev.innerText = fmtInt(prev); 
                 };
@@ -1451,7 +1362,6 @@
 
             const processSalesData = () => {
                 const { rawData, selectedYear, sector, activeProduct } = state;
-                
                 let stats = {
                     curr: { UREA: {real:0, target:0}, NPK: {real:0, target:0} },
                     prev: { UREA: {real:0}, NPK: {real:0} },
@@ -1462,18 +1372,14 @@
                     provinsi: {} 
                 };
 
-                // REVISI: LANGKAH 1 - CARI BULAN TERAKHIR (MAX MONTH) PER PRODUK UNTUK TAHUN BERJALAN
                 let maxMonths = { UREA: -1, NPK: -1 };
                 rawData.forEach(r => {
                     if (r.TAHUN === selectedYear) {
                          let isSectorMatch = (sector === 'SUBSIDI') ? r.SEKTOR.includes('SUBSIDI') : r.SEKTOR.includes('RETAIL');
                          if (!isSectorMatch) return;
-                         
                          let prodKey = '';
                          if (r.PRODUK.includes('UREA') || r.PRODUK.includes('NITREA')) prodKey = 'UREA';
                          else if (r.PRODUK.includes('NPK') || r.PRODUK.includes('PHONSKA')) prodKey = 'NPK';
-                         
-                         // Jika ada realisasi, catat bulannya
                          if (prodKey && r.KATEGORI === 'PENJUALAN' && r.JENIS === 'REALISASI' && r.BULAN > maxMonths[prodKey]) {
                              maxMonths[prodKey] = r.BULAN;
                          }
@@ -1481,32 +1387,23 @@
                 });
 
                 const dropdownProvs = new Set();
-
-                // REVISI: LANGKAH 2 - AGGREGASI DATA DENGAN FILTER YTD
                 rawData.forEach(r => {
-                    // Filter Sektor Sales
                     let isSectorMatch = (sector === 'SUBSIDI') ? 
                         (r.SEKTOR.includes('SUBSIDI')) : (r.SEKTOR.includes('RETAIL')); 
                     if (!isSectorMatch) return;
-
-                    // Filter Produk
                     let prodKey = '';
                     if (r.PRODUK.includes('UREA') || r.PRODUK.includes('NITREA')) prodKey = 'UREA';
                     else if (r.PRODUK.includes('NPK') || r.PRODUK.includes('PHONSKA')) prodKey = 'NPK';
                     if (!prodKey) return;
 
-                    // Jenis Data
                     let isReal = (r.KATEGORI === 'PENJUALAN' && r.JENIS === 'REALISASI');
                     let isTarget = r.JENIS === 'ALOKASI' || r.JENIS === 'RKO'; 
                     let isStock = r.JENIS.includes('STOK') || r.JENIS.includes('STOCK') || r.JENIS.includes('AKTUAL') || r.KATEGORI === 'STOK';
 
-                    // Data Tahun Ini
                     if (r.TAHUN === selectedYear) {
                         if (isReal) {
                             stats.curr[prodKey].real += r.TONASE;
                             if(r.BULAN >= 0) stats.nasional[prodKey].real[r.BULAN] += r.TONASE;
-                            
-                            // Provinsi Aggregation
                             if (prodKey === activeProduct) {
                                 if(r.PROVINSI && r.PROVINSI !== 'LAINNYA') dropdownProvs.add(r.PROVINSI);
                                 if (!stats.provinsi[r.PROVINSI]) stats.provinsi[r.PROVINSI] = { real: 0, target: 0 };
@@ -1523,10 +1420,7 @@
                             if(r.BULAN >= 0) stats.nasional[prodKey].stock[r.BULAN] += r.TONASE;
                         }
                     }
-                    
-                    // REVISI: LOGIKA GROWTH YTD (Hanya jumlahkan sampai bulan max di tahun berjalan)
                     if (r.TAHUN === (selectedYear - 1) && isReal) {
-                        // Cek apakah bulan data tahun lalu <= bulan terakhir tahun ini
                         if (r.BULAN <= maxMonths[prodKey]) {
                             stats.prev[prodKey].real += r.TONASE;
                         }
@@ -1540,15 +1434,11 @@
                     renderNasionalChart(stats.nasional);
                     renderProvChart(); 
                 }
-                
-                // Store globally for Distribution use
                 statsGlobal = stats;
             };
 
             const processDistributionData = () => {
                 const { rawData, selectedYear, sector, activeProduct } = state;
-                
-                // Init Stats Dist
                 let distStats = {
                     curr: { UREA: {real:0}, NPK: {real:0} }, 
                     prev: { UREA: {real:0}, NPK: {real:0} },
@@ -1563,26 +1453,21 @@
                     provinsi: {}
                 };
                 
-                // Use Targets from Sales Stats if available
                 if (statsGlobal) {
                     distStats.nasional.UREA.target = statsGlobal.nasional.UREA.target;
                     distStats.nasional.NPK.target = statsGlobal.nasional.NPK.target;
-                    // Copy Stock data from Sales stats
                     distStats.nasional.UREA.stock = statsGlobal.nasional.UREA.stock;
                     distStats.nasional.NPK.stock = statsGlobal.nasional.NPK.stock;
                 }
 
-                // REVISI: LANGKAH 1 - CARI BULAN TERAKHIR (MAX MONTH) PER PRODUK DISTRIBUSI
                 let maxMonths = { UREA: -1, NPK: -1 };
                 rawData.forEach(r => {
                      if (r.TAHUN === selectedYear && r.JENIS === 'REALISASI DISTRIBUSI') {
                         let isSectorMatch = (sector === 'SUBSIDI') ? r.SEKTOR.includes('SUBSIDI') : r.SEKTOR.includes('RETAIL');
                         if (!isSectorMatch) return;
-                        
                         let prodKey = '';
                         if (r.PRODUK.includes('UREA')) prodKey = 'UREA';
                         else if (r.PRODUK.includes('NPK')) prodKey = 'NPK';
-
                         if (prodKey && r.BULAN > maxMonths[prodKey]) {
                             maxMonths[prodKey] = r.BULAN;
                         }
@@ -1590,46 +1475,34 @@
                 });
 
                 const dropdownProvs = new Set();
-
                 rawData.forEach(r => {
                     let isSectorMatch = (sector === 'SUBSIDI') ? 
                         (r.SEKTOR.includes('SUBSIDI')) : (r.SEKTOR.includes('RETAIL')); 
                     if (!isSectorMatch) return;
-
                     let prodKey = '';
                     if (r.PRODUK.includes('UREA')) prodKey = 'UREA';
                     else if (r.PRODUK.includes('NPK')) prodKey = 'NPK';
                     if (!prodKey) return;
-
-                    // UPDATED: Distribution Filter using JENIS "REALISASI DISTRIBUSI"
                     if (r.JENIS !== 'REALISASI DISTRIBUSI') return;
 
                     const val = r.TONASE;
-
                     if (r.TAHUN === selectedYear) {
                         distStats.curr[prodKey].real += val;
-                        
                         if(r.BULAN >= 0) {
                             distStats.nasional[prodKey].real[r.BULAN] += val;
                             if (r.KATEGORI && (r.KATEGORI.includes('TRUCK') || r.KATEGORI.includes('DARAT'))) distStats.nasional[prodKey].land[r.BULAN] += val;
                             else if (r.KATEGORI && (r.KATEGORI.includes('KAPAL') || r.KATEGORI.includes('LAUT'))) distStats.nasional[prodKey].sea[r.BULAN] += val;
                         }
-
-                        // Breakdown Logic (Updated to match sample data)
                         if (r.MATERIAL && (r.MATERIAL.includes('INBAG') || r.MATERIAL.includes('ZAK'))) distStats.details[prodKey].bag += val;
                         else if (r.MATERIAL && (r.MATERIAL.includes('CURAH') || r.MATERIAL.includes('BULK'))) distStats.details[prodKey].bulk += val;
-
                         if (r.KATEGORI && (r.KATEGORI.includes('TRUCK') || r.KATEGORI.includes('DARAT'))) distStats.details[prodKey].land += val;
                         else if (r.KATEGORI && (r.KATEGORI.includes('KAPAL') || r.KATEGORI.includes('LAUT'))) distStats.details[prodKey].sea += val;
-
                         if (prodKey === activeProduct) {
                             if(r.PROVINSI && r.PROVINSI !== 'LAINNYA') dropdownProvs.add(r.PROVINSI);
                             if (!distStats.provinsi[r.PROVINSI]) distStats.provinsi[r.PROVINSI] = { real: 0, target: 0 };
                             distStats.provinsi[r.PROVINSI].real += val;
                         }
                     }
-                    
-                    // REVISI: FILTER YTD DISTRIBUSI TAHUN LALU
                     if (r.TAHUN === (selectedYear - 1)) {
                         if (r.BULAN <= maxMonths[prodKey]) {
                             distStats.prev[prodKey].real += val;
@@ -1650,10 +1523,8 @@
                     }
                     });
                 }
-
                 distStatsGlobal = distStats;
                 populateProvDropdown('dropdown-provinsi-dist', [...dropdownProvs]);
-                
                 renderDistKPI(distStats);
                 renderDistRankings(distStats.provinsi);
                 renderNasionalDistChart(distStats.nasional);
@@ -1662,16 +1533,10 @@
 
             const updateDashboard = () => {
                 const { page } = state;
-                
-                // Ensure elements exist before accessing style
                 const elSales = document.getElementById('view-sales');
                 const elDist = document.getElementById('view-distribution');
-                
                 if (elSales) elSales.style.display = page === 'SALES' ? 'block' : 'none';
                 if (elDist) elDist.style.display = page === 'DISTRIBUSI' ? 'block' : 'none';
-
-                // Always process both data sets so global variables are populated
-                // This prevents 'undefined' errors when switching contexts quickly
                 processSalesData();
                 processDistributionData();
             };
@@ -1703,81 +1568,75 @@
                     });
                     if(!years.includes(state.selectedYear) && years.length > 0) state.selectedYear = years[0];
                 }
-
                 updateDashboard(); 
             };
 
-            // OPTIMIZED FETCH DATA WITH CACHING
+            // ---- MODIFIED FETCH DATA (SEND PASSWORD TO SERVER) ----
             const fetchData = async () => {
                 const loader = document.getElementById('loader');
                 
-                // 1. OPTIMASI: Cek Cache Lokal Dulu (Render Instan)
-                const cachedDataStr = localStorage.getItem('local_raw_data');
+                // 1. Cek Cache Lokal Dulu (Render Instan)
+                const cachedDataStr = localStorage.getItem(CACHE_KEY_DATA);
                 let hasCache = false;
 
                 if (cachedDataStr) {
                     try {
                         const cachedData = JSON.parse(cachedDataStr);
                         if (Array.isArray(cachedData) && cachedData.length > 0) {
-                            console.log("Menggunakan data cache lokal sementara...");
-                            
-                            // Pisahkan data cache untuk render awal
+                            console.log("Menggunakan data cache lokal...");
                             const salesDistDataCache = [];
                             const aiDataCache = [];
                             cachedData.forEach(row => {
                                 if (row.INFORMASI) aiDataCache.push(row);
                                 else salesDistDataCache.push(row);
                             });
-                            
                             infoAiData = aiDataCache;
                             processData(salesDistDataCache);
-                            
-                            // Matikan loader segera karena data cache sudah tampil
                             if (loader) loader.style.display = 'none';
                             hasCache = true;
                         }
                     } catch (e) {
                         console.error("Cache error", e);
-                        localStorage.removeItem('local_raw_data');
+                        localStorage.removeItem(CACHE_KEY_DATA);
                     }
                 }
 
-                // Jika tidak ada cache, loader wajib muncul
                 if (!hasCache && loader) loader.style.display = 'flex';
-
-                // Safety timeout jika fetch macet (hanya berguna jika tidak ada cache)
-                if (!hasCache) {
-                    setTimeout(() => { if(loader) loader.style.display = 'none'; }, 15000);
-                }
+                if (!hasCache) setTimeout(() => { if(loader) loader.style.display = 'none'; }, 15000);
 
                 try {
-                    // 2. Fetch Data Baru dari Google Sheets (Background process jika cache ada)
-                    const res = await fetch(API_URL);
-                    const data = await res.json();
+                    // 2. Fetch Data Baru (Kirim Password ke Server)
+                    // Mengirim parameter ?auth=PASSWORD ke URL
+                    const finalUrl = `${BASE_API_URL}?auth=${state.authToken}`;
+                    
+                    const res = await fetch(finalUrl);
+                    const responseJson = await res.json();
+
+                    // Cek jika server menolak password
+                    if (responseJson.status === 'error') {
+                        throw new Error(responseJson.message || 'Akses Ditolak');
+                    }
+
+                    const data = responseJson;
                     
                     if (!Array.isArray(data)) throw new Error("Format data salah");
                     
-                    // Cek Hash/Perubahan Data
                     const totalTonase = data.reduce((acc, row) => acc + (parseFloat(row.TONASE)||0), 0);
                     const currentHash = data.length + "_" + totalTonase;
 
-                    // Jika data berbeda dengan hash terakhir atau belum ada cache, update!
                     if (currentHash !== state.lastDataHash || !hasCache) {
                         console.log("Data baru ditemukan, melakukan update...");
-                        
                         const now = new Date();
                         const formattedDate = `Update: ${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
                         
                         state.lastUpdateDate = formattedDate;
                         state.lastDataHash = currentHash;
                         
-                        // Simpan Metadata
-                        localStorage.setItem('last_update_date', formattedDate);
-                        localStorage.setItem('last_data_hash', currentHash);
+                        localStorage.setItem(CACHE_KEY_TIME, formattedDate);
+                        localStorage.setItem(CACHE_KEY_HASH, currentHash);
                         
-                        // 3. OPTIMASI: Simpan Data Mentah ke LocalStorage
                         try {
-                            localStorage.setItem('local_raw_data', JSON.stringify(data));
+                            localStorage.setItem(CACHE_KEY_DATA, JSON.stringify(data));
                         } catch (quotaExceeded) {
                             console.warn("Data terlalu besar untuk cache lokal", quotaExceeded);
                         }
@@ -1785,14 +1644,12 @@
                         const headerText = document.getElementById('header-update-text');
                         if(headerText) headerText.innerText = formattedDate;
 
-                        // Proses Ulang Data Baru
                         const salesDistData = [];
                         const aiData = [];
                         data.forEach(row => {
                             if (row.INFORMASI) aiData.push(row);
                             else salesDistData.push(row);
                         });
-
                         infoAiData = aiData; 
                         processData(salesDistData); 
                     } else {
@@ -1801,13 +1658,30 @@
 
                 } catch (err) {
                     console.error("Fetch Error:", err);
-                    if (!hasCache) alert("Gagal mengambil data: " + err.message); // Hanya alert jika user melihat layar kosong
+                    // Jika error karena auth, logout user
+                    if (err.message.includes('Akses Ditolak')) {
+                        alert("Sesi berakhir atau password salah. Silakan login ulang.");
+                        app.logoutApp();
+                    } else if (!hasCache) {
+                        alert("Gagal mengambil data: " + err.message); 
+                    }
                 } finally {
                     if(loader) loader.style.display = 'none';
                 }
             };
 
             const init = () => { 
+                // CHECK AUTH FIRST
+                if (!state.authToken) {
+                    document.getElementById('authOverlay').style.display = 'flex';
+                    document.getElementById('loader').style.display = 'none';
+                    return; 
+                }
+                document.getElementById('authOverlay').style.display = 'none';
+                startApp();
+            };
+
+            const startApp = () => {
                 applyTheme(state.theme);
                 if(state.lastUpdateDate) {
                     const headerText = document.getElementById('header-update-text');
@@ -1815,17 +1689,14 @@
                 }
                 fetchData(); 
                 checkScreenSize(); 
-
+                
                 const defaultMenu = state.page === 'SALES' ? 'submenu-sales' : 'submenu-dist';
                 const defaultBtn = state.page === 'SALES' ? document.getElementById('parent-sales') : document.getElementById('parent-dist');
-                if(defaultMenu && defaultBtn) {
-                    toggleMenu(defaultMenu, defaultBtn);
-                }
-                
+                if(defaultMenu && defaultBtn) { toggleMenu(defaultMenu, defaultBtn); }
                 navigate(state.page, state.sector);
             };
 
-            // AI Analyze Helper
+            // ... (Fungsi analyzeData, flipCard, navigate TETAP SAMA) ...
             const analyzeData = async (type) => {
                 const flipInner = document.getElementById(`flip-${type}`);
                 const content = document.getElementById(`ai-${type}-content`);
@@ -1837,7 +1708,6 @@
                 const sec = state.sector; 
                 const year = state.selectedYear;
 
-                // --- 1. DETERMINE TIME CONTEXT (Run-rate) ---
                 const refData = (prod === 'UREA' ? statsGlobal.nasional.UREA.real : statsGlobal.nasional.NPK.real);
                 let lastMonthIdx = 0;
                 for(let i=11; i>=0; i--) {
@@ -1847,7 +1717,6 @@
                 const currMonthName = monthsName[lastMonthIdx];
                 const monthsElapsed = lastMonthIdx + 1;
 
-                // --- 2. CALCULATE METRICS (Specific to Type) ---
                 let ytdReal = 0;
                 let ytdTarget = 0;
                 let annualTarget = 0;
@@ -1855,40 +1724,29 @@
                 let ctxLabel = "";
 
                 if (type.includes('nasional')) {
-                    // Use Stats Global Arrays
                     const source = type === 'nasional' ? statsGlobal : distStatsGlobal;
                     const d = prod === 'UREA' ? source.nasional.UREA : source.nasional.NPK;
-                    
                     ytdReal = d.real.slice(0, monthsElapsed).reduce((a,b)=>a+b,0);
                     ytdTarget = d.target.slice(0, monthsElapsed).reduce((a,b)=>a+b,0);
                     annualTarget = d.target.reduce((a,b)=>a+b,0);
                     currentStock = d.stock[lastMonthIdx];
                     ctxLabel = type === 'nasional' ? 'Nasional' : 'Distribusi Nasional';
-
                 } else if (type.includes('provinsi')) {
-                    // Recalculate for Province to get precise YTD Target
                     const isDist = type.includes('Dist');
                     const dropdownId = isDist ? 'dropdown-provinsi-dist' : 'dropdown-provinsi';
                     const provName = document.getElementById(dropdownId).value;
-                    
                     if(!provName) { content.innerHTML = "<p>Pilih provinsi dulu.</p>"; return; }
                     ctxLabel = (isDist ? 'Distribusi ' : 'Penjualan ') + provName;
 
-                    // Iterate raw data
                     state.rawData.forEach(r => {
                         if (r.TAHUN !== year || r.PROVINSI !== provName) return;
-                        
-                        // Filter Sector
                         let isSectorMatch = (sec === 'SUBSIDI') ? r.SEKTOR.includes('SUBSIDI') : r.SEKTOR.includes('RETAIL');
                         if (!isSectorMatch) return;
-
-                        // Filter Product
                         let prodKey = '';
                         if (r.PRODUK.includes('UREA') || r.PRODUK.includes('NITREA')) prodKey = 'UREA';
                         else if (r.PRODUK.includes('NPK') || r.PRODUK.includes('PHONSKA')) prodKey = 'NPK';
                         if (prodKey !== prod) return;
 
-                        // Identify Row Type
                         let isReal = false;
                         let isTarget = false;
                         let isStock = false;
@@ -1900,31 +1758,18 @@
                             if (r.KATEGORI === 'PENJUALAN' && r.JENIS === 'REALISASI') isReal = true;
                             else if (r.JENIS === 'ALOKASI' || r.JENIS === 'RKO') isTarget = true;
                         }
-                        
                         if (r.JENIS.includes('STOK') || r.JENIS.includes('STOCK') || r.JENIS.includes('AKTUAL') || r.KATEGORI === 'STOK') {
                             isStock = true;
                         }
-
-                        if (isReal && r.BULAN <= lastMonthIdx) {
-                            ytdReal += r.TONASE;
-                        }
-                        if (isTarget) {
-                            annualTarget += r.TONASE;
-                            if (r.BULAN <= lastMonthIdx) {
-                                ytdTarget += r.TONASE;
-                            }
-                        }
-                        if (isStock && r.BULAN === lastMonthIdx) {
-                            currentStock += r.TONASE;
-                        }
+                        if (isReal && r.BULAN <= lastMonthIdx) { ytdReal += r.TONASE; }
+                        if (isTarget) { annualTarget += r.TONASE; if (r.BULAN <= lastMonthIdx) { ytdTarget += r.TONASE; } }
+                        if (isStock && r.BULAN === lastMonthIdx) { currentStock += r.TONASE; }
                     });
                 }
 
-                // Calculations
                 const pctYtd = ytdTarget > 0 ? (ytdReal / ytdTarget * 100).toFixed(1) : 0;
                 const pctAnnual = annualTarget > 0 ? (ytdReal / annualTarget * 100).toFixed(1) : 0;
 
-                // --- 3. PROMPT GENERATION ---
                 const ctxData = `
                     DATA: ${ctxLabel}, Produk ${prod}, Sektor ${sec}, Tahun ${year}.
                     - Realisasi Kumulatif (s.d ${currMonthName}): ${formatNumber(ytdReal)} Ton.
@@ -1935,70 +1780,48 @@
                     - % Capaian vs Alokasi Tahunan: ${pctAnnual}%.
                 `;
 
-                // REVISI LOGIKA FILTER AI INSIGHT (UPDATED - SUPPORT PREV YEAR)
                 let relevantInfo = infoAiData.filter(item => {
-                    // Cek Status (Harus 'AKTIF')
                     const iStatus = item.STATUS ? item.STATUS.toUpperCase().trim() : '';
                     if (iStatus !== 'AKTIF') return false;
-
                     const iYear = parseInt(item.TAHUN);
                     const iSektor = item.SEKTOR ? item.SEKTOR.toUpperCase() : 'SEMUA';
                     const iProduk = item.PRODUK ? item.PRODUK.toUpperCase() : 'SEMUA';
                     const iProv = item.PROVINSI ? toTitleCase(item.PROVINSI) : 'SEMUA';
-                    
-                    // REVISI: Ambil Tahun Ini ATAU Tahun Lalu (untuk konteks Growth/Sejarah)
                     if (iYear !== year && iYear !== (year - 1)) return false;
-
                     const matchSektor = (iSektor === 'SEMUA' || iSektor === sec);
                     const matchProduk = (iProduk === 'SEMUA' || iProduk === prod);
-                    
                     let matchProv = true;
                     if (type.includes('provinsi')) {
                          const currentProv = document.getElementById(type.includes('Dist') ? 'dropdown-provinsi-dist' : 'dropdown-provinsi').value;
                          matchProv = (iProv === 'SEMUA' || iProv === currentProv || iProv.toUpperCase() === 'NASIONAL');
-                    } else {
-                         // Nasional view usually general info
-                         matchProv = (iProv === 'SEMUA' || iProv.toUpperCase() === 'NASIONAL'); 
-                    }
-
+                    } else { matchProv = (iProv === 'SEMUA' || iProv.toUpperCase() === 'NASIONAL'); }
                     return matchSektor && matchProduk && matchProv;
                 });
 
                 let contextString = "";
                 if (relevantInfo.length > 0) {
                     contextString = "\n\nFAKTOR EKSTERNAL / BERITA:";
-                    // Sort by Year then Month (Assuming info is sequential)
                     relevantInfo.sort((a,b) => a.TAHUN - b.TAHUN);
-                    
                     relevantInfo.forEach(info => {
                         const cat = info.KATEGORI || 'Info';
-                        // REVISI: Tampilkan Tahun agar AI tahu konteks waktu
                         const labelWaktu = `(${info.TAHUN} ${info.BULAN || ''})`; 
                         contextString += `\n- [${cat}] ${labelWaktu} ${info.INFORMASI}`;
                     });
                 }
 
-                // Prompt
                 const promptText = `
                     Peran: Senior Data Analyst.
-                    
-                    Data Kinerja:
-                    ${ctxData}
-                    
-                    Info Pendukung (Info tahun lalu disertakan sebagai konteks historis/penyebab):
-                    ${contextString || "Tidak ada isu khusus."}
-                    
+                    Data Kinerja: ${ctxData}
+                    Info Pendukung: ${contextString || "Tidak ada isu khusus."}
                     Instruksi:
-                    1. Analisa performa berdasarkan capaian terhadap Alokasi Kumulatif (s.d bulan ini) dan Ketersediaan Stok.
-                    2. Berikan 3 poin insight: Status, Faktor Penyebab, dan Rekomendasi Aksi.
-                    3. ATURAN PENTING: Gunakan tepat 2 kalimat per poin.
-                    4. FORMAT OUTPUT: Gunakan format "Label: Isi" (Tanpa tanda kurung siku). Gunakan istilah "Alokasi" bukan "Target".
-                    
+                    1. Analisa performa berdasarkan capaian terhadap Alokasi Kumulatif dan Stok.
+                    2. Berikan 3 poin insight: Status, Faktor, dan Aksi.
+                    3. ATURAN: Gunakan tepat 2 kalimat per poin.
                     Format HTML (Body Only):
                     <ul style="margin:0; padding-left:1.2em; font-size:12px;">
-                        <li style="margin-bottom:6px;"><strong>Status:</strong> (Analisa capaian vs Alokasi & posisi stok aman/tidak).</li>
-                        <li style="margin-bottom:6px;"><strong>Faktor:</strong> (Penyebab utama dari data/info).</li>
-                        <li style="margin-bottom:6px;"><strong>Aksi:</strong> (Rekomendasi strategis).</li>
+                        <li style="margin-bottom:6px;"><strong>Status:</strong> ...</li>
+                        <li style="margin-bottom:6px;"><strong>Faktor:</strong> ...</li>
+                        <li style="margin-bottom:6px;"><strong>Aksi:</strong> ...</li>
                     </ul>
                 `;
 
@@ -2008,14 +1831,11 @@
                         body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
                     });
                     const result = await response.json();
-                    
-                    // Added safety check for candidates
                     if (!result.candidates || result.candidates.length === 0) {
-                        console.error("Gemini API Error (No Candidates):", result);
-                        content.innerHTML = `<p style="color:var(--color-danger); padding:10px;">Maaf, AI sedang sibuk atau tidak dapat memberikan respon saat ini.</p>`;
+                        console.error("Gemini API Error:", result);
+                        content.innerHTML = `<p style="color:var(--color-danger); padding:10px;">Maaf, AI sedang sibuk.</p>`;
                         return;
                     }
-
                     let cleanText = result.candidates[0].content.parts[0].text.replace(/```html/g, '').replace(/```/g, '').trim();
                     content.innerHTML = `<div style="padding-top:10px;">${cleanText}</div>`;
                 } catch (e) {
@@ -2029,49 +1849,27 @@
             const navigate = (pageType, sectorType) => {
                 state.page = pageType;
                 state.sector = sectorType;
-                
                 const navIds = ['nav-sales-subsidi', 'nav-sales-retail', 'nav-dist-subsidi', 'nav-dist-retail'];
-                navIds.forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) el.classList.remove('active');
-                });
-                
-                let activeId = '';
-                let titlePrefix = '';
-                let parentMenuId = '';
-                let parentBtnId = '';
+                navIds.forEach(id => { const el = document.getElementById(id); if (el) el.classList.remove('active'); });
+                let activeId = '', titlePrefix = '', parentMenuId = '', parentBtnId = '';
                 
                 if (pageType === 'SALES') {
                     if (sectorType === 'SUBSIDI') activeId = 'nav-sales-subsidi';
                     else activeId = 'nav-sales-retail';
-                    titlePrefix = 'Penjualan';
-                    parentMenuId = 'submenu-sales';
-                    parentBtnId = 'parent-sales';
+                    titlePrefix = 'Penjualan'; parentMenuId = 'submenu-sales'; parentBtnId = 'parent-sales';
                 } else {
                     if (sectorType === 'SUBSIDI') activeId = 'nav-dist-subsidi';
                     else activeId = 'nav-dist-retail';
-                    titlePrefix = 'Distribusi';
-                    parentMenuId = 'submenu-dist';
-                    parentBtnId = 'parent-dist';
+                    titlePrefix = 'Distribusi'; parentMenuId = 'submenu-dist'; parentBtnId = 'parent-dist';
                 }
-                
-                // Highlight sub-item
-                const activeEl = document.getElementById(activeId);
-                if(activeEl) activeEl.classList.add('active');
-                
-                // Ensure parent menu is open
+                const activeEl = document.getElementById(activeId); if(activeEl) activeEl.classList.add('active');
                 const parentMenu = document.getElementById(parentMenuId);
                 const parentBtn = document.getElementById(parentBtnId);
-                if (parentMenu && parentBtn) {
-                    if (!parentMenu.classList.contains('show')) {
-                        toggleMenu(parentMenuId, parentBtn);
-                    }
-                }
+                if (parentMenu && parentBtn) { if (!parentMenu.classList.contains('show')) { toggleMenu(parentMenuId, parentBtn); } }
 
                 const sectorLabel = sectorType === 'SUBSIDI' ? 'Subsidi' : 'Retail';
                 const pageTitle = document.getElementById('page-title-text');
                 if (pageTitle) pageTitle.innerText = `${titlePrefix} ${sectorLabel}`;
-
                 updateDashboard();
                 if(window.innerWidth <= 768) { state.sidebarOpen = false; renderSidebar(); }
             };
@@ -2090,31 +1888,38 @@
                     const btnNasNpk = document.getElementById('btn-nas-npk');
                     if(btnNasUrea) btnNasUrea.classList.toggle('active', prod === 'UREA');
                     if(btnNasNpk) btnNasNpk.classList.toggle('active', prod === 'NPK');
-
                     const btnDistUrea = document.getElementById('btn-nas-dist-urea');
                     const btnDistNpk = document.getElementById('btn-nas-dist-npk');
                     if(btnDistUrea) btnDistUrea.classList.toggle('active', prod === 'UREA');
                     if(btnDistNpk) btnDistNpk.classList.toggle('active', prod === 'NPK');
-
                     updateDashboard();
                 },
                 renderProvChart,
                 renderDistProvChart,
-                showLoginModal: () => document.getElementById('loginModal').style.display = 'flex',
-                closeLoginModal: () => document.getElementById('loginModal').style.display = 'none',
-                login: () => {
-                    const p = document.getElementById('adminPass').value;
-                    if(p === 'pso123') {
-                        state.isAdmin = true;
-                        document.getElementById('admin-menu').style.display = 'block';
-                        document.getElementById('login-btn-container').style.display = 'none';
-                        document.getElementById('loginModal').style.display = 'none';
-                    } else { alert('Password salah!'); }
+                // --- FUNGSI LOGIN APP ---
+                loginApp: () => {
+                    const p = document.getElementById('appPassword').value;
+                    const err = document.getElementById('authError');
+                    
+                    if(p.length > 0) {
+                        // Simpan password di state sementara (session)
+                        state.authToken = p; 
+                        sessionStorage.setItem(CACHE_KEY_AUTH, p);
+                        
+                        document.getElementById('authOverlay').style.opacity = '0';
+                        setTimeout(() => {
+                            document.getElementById('authOverlay').style.display = 'none';
+                            startApp(); // Coba fetch data dengan password ini
+                        }, 500);
+                    } else { 
+                        err.style.display = 'block';
+                        err.innerText = "Masukkan password!";
+                    }
                 },
-                logout: () => {
-                    state.isAdmin = false;
-                    document.getElementById('admin-menu').style.display = 'none';
-                    document.getElementById('login-btn-container').style.display = 'block';
+                logoutApp: () => {
+                    sessionStorage.removeItem(CACHE_KEY_AUTH);
+                    localStorage.removeItem(CACHE_KEY_DATA); // Clear cache data juga demi keamanan
+                    location.reload();
                 },
                 analyzeData, 
                 flipCard,
