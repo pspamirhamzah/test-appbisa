@@ -933,7 +933,9 @@
                 gradient.addColorStop(0, hexToRgbA(color, 0.4));
                 gradient.addColorStop(1, hexToRgbA(color, 0.0));
                 
-                const targetIcon = createDashedCircle('#999'); 
+                // --- COLOR REVISION: WHITE (Dark Mode) & BLACK (Light Mode) ---
+                const colorTarget = state.theme === 'dark' ? '#ffffff' : '#000000';
+                const targetIcon = createDashedCircle(colorTarget); 
 
                 charts.nasional = new Chart(ctx, {
                     type: 'line',
@@ -946,7 +948,7 @@
                                 pointRadius: 4, pointHoverRadius: 6, pointStyle: 'circle', order: 1
                             },
                             {
-                                label: 'Alokasi', data: data.target, borderColor: '#666', borderDash: [6, 6],
+                                label: 'Alokasi', data: data.target, borderColor: colorTarget, borderDash: [6, 6],
                                 borderWidth: 2, fill: false, tension: 0.4, pointRadius: 0, pointStyle: targetIcon, order: 2 
                             },
                             {
@@ -1011,7 +1013,9 @@
                 gradient.addColorStop(0, hexToRgbA(colorMain, 0.4));
                 gradient.addColorStop(1, hexToRgbA(colorMain, 0.0));
 
-                const targetIcon = createDashedCircle('#999');
+                // --- COLOR REVISION: WHITE (Dark Mode) & BLACK (Light Mode) ---
+                const colorTarget = state.theme === 'dark' ? '#ffffff' : '#000000';
+                const targetIcon = createDashedCircle(colorTarget);
 
                 charts.provinsi = new Chart(ctx, {
                     type: 'line',
@@ -1023,7 +1027,7 @@
                                 fill: true, tension: 0.4, borderWidth: 3, pointRadius: 4, pointHoverRadius: 6, pointStyle: 'circle', order: 1
                             },
                             {
-                                label: 'Alokasi', data: mTarget, borderColor: '#666', borderDash: [6, 6], borderWidth: 2, fill: false, tension: 0.4, pointRadius: 0, pointStyle: targetIcon, order: 2
+                                label: 'Alokasi', data: mTarget, borderColor: colorTarget, borderDash: [6, 6], borderWidth: 2, fill: false, tension: 0.4, pointRadius: 0, pointStyle: targetIcon, order: 2
                             },
                             {
                                 label: 'Stok', data: mStock, type: 'bar', backgroundColor: '#616161', borderColor: '#616161', borderWidth: 0, barPercentage: 0.8, pointStyle: 'rect', order: 3
@@ -1067,6 +1071,9 @@
                 const gradient = ctx.createLinearGradient(0, 0, 0, 300);
                 gradient.addColorStop(0, hexToRgbA(colorLine, 0.4));
                 gradient.addColorStop(1, hexToRgbA(colorLine, 0.0));
+                
+                // --- COLOR REVISION: WHITE (Dark Mode) & BLACK (Light Mode) ---
+                const colorTarget = state.theme === 'dark' ? '#ffffff' : '#000000';
 
                 charts.nasionalDist = new Chart(ctx, {
                     type: 'bar',
@@ -1089,8 +1096,8 @@
                             },
                             {
                                 type: 'line', label: 'Alokasi', data: data.target, 
-                                borderColor: '#666', borderDash: [6, 6], borderWidth: 2, 
-                                fill: false, tension: 0.4, pointRadius: 0, pointStyle: createDashedCircle('#999'), order: 2
+                                borderColor: colorTarget, borderDash: [6, 6], borderWidth: 2, 
+                                fill: false, tension: 0.4, pointRadius: 0, pointStyle: createDashedCircle(colorTarget), order: 2
                             },
                             {
                                 label: 'Truk', data: data.land, backgroundColor: colorTruck, stack: 'stack1', order: 3
@@ -1112,6 +1119,7 @@
                         },
                         scales: { 
                             x: { grid: { display: false }, stacked: true }, 
+                            // REVISI: stacked: false agar garis Alokasi/Stok tidak ikut menumpuk di atas bar
                             y: { grid: { color: state.theme==='dark'?'#333':'#e5e7eb' }, beginAtZero: true, stacked: false, ticks: { maxTicksLimit: 5, callback: (v) => v===0?null:(v>=1000?(v/1000)+' rb':v) } } 
                         }
                     }
@@ -1173,7 +1181,9 @@
                 const colorTruck = '#616161'; 
                 const colorKapal = '#757575'; // Medium Grey
                 
-                const targetIcon = createDashedCircle('#999');
+                // --- COLOR REVISION: WHITE (Dark Mode) & BLACK (Light Mode) ---
+                const colorTarget = state.theme === 'dark' ? '#ffffff' : '#000000';
+                const targetIcon = createDashedCircle(colorTarget);
 
                 // Gradient for Stock Line
                 const gradient = ctx.createLinearGradient(0, 0, 0, 300);
@@ -1200,7 +1210,7 @@
                                 order: 1 
                             },
                             {
-                                type: 'line', label: 'Alokasi', data: mTarget, borderColor: '#666', borderDash: [6, 6], borderWidth: 2, fill: false, tension: 0.4, pointRadius: 0, pointStyle: targetIcon, order: 2
+                                type: 'line', label: 'Alokasi', data: mTarget, borderColor: colorTarget, borderDash: [6, 6], borderWidth: 2, fill: false, tension: 0.4, pointRadius: 0, pointStyle: targetIcon, order: 2
                             },
                             {
                                 label: 'Truk', data: mLand, backgroundColor: colorTruck, stack: 'stack1', order: 3
@@ -1222,6 +1232,7 @@
                         },
                         scales: { 
                             x: { grid: { display: false }, stacked: true }, 
+                            // REVISI: stacked: false agar garis Alokasi/Stok tidak ikut menumpuk di atas bar
                             y: { 
                                 grid: { color: state.theme==='dark'?'#333':'#e5e7eb' }, 
                                 beginAtZero: true, 
