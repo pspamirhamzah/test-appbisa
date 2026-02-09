@@ -1061,8 +1061,10 @@
                 
                 // Colors Updated (Grey Theme for Dist, Yellow/Blue for Stock Line)
                 const colorLine = isUrea ? '#FFDE00' : '#38bdf8'; 
-                const colorTruck = '#616161'; // Dark Grey
-                const colorKapal = '#757575'; // Medium Grey (Darker than before to reduce contrast)
+                
+                // REVISI WARNA: Truk (Tua), Kapal (Muda)
+                const colorTruck = '#555555'; // Abu-abu Tua
+                const colorKapal = '#B3B3B3'; // Abu-abu Muda
 
                 // Gradient for Stock Line
                 const gradient = ctx.createLinearGradient(0, 0, 0, 300);
@@ -1175,8 +1177,10 @@
                 
                 // Colors Updated
                 const colorLine = isUrea ? '#FFDE00' : '#38bdf8'; 
-                const colorTruck = '#616161'; 
-                const colorKapal = '#757575'; // Medium Grey
+                
+                // REVISI WARNA: Truk (Tua), Kapal (Muda)
+                const colorTruck = '#555555'; // Abu-abu Tua
+                const colorKapal = '#B3B3B3'; // Abu-abu Muda
                 
                 // --- COLOR REVISION: WHITE (Dark Mode) & BLACK (Light Mode) ---
                 const colorTarget = state.theme === 'dark' ? '#ffffff' : '#000000';
