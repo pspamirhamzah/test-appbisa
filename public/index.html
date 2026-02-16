@@ -5,7 +5,7 @@
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard APP Bisa - Revisi Growth YTD & AI Insight</title>
+    <title>APP Bisa</title>
 
     <!-- FAVICON & ICONS -->
     <meta property="og:title" content="Dashboard APP Bisa">
@@ -492,8 +492,9 @@
                         <div class="progress-track-modern">
                             <div class="progress-bar bg-urea" id="prog-urea" style="width: 0%"></div>
                         </div>
+                        <!-- MODIFIED: Added ID to label wrapper for dynamic Text Change (Alokasi vs RKAP) -->
                         <div class="kpi-detail-row">
-                            <span>Alokasi: <span id="val-urea-target">0</span></span>
+                            <span id="lbl-urea-target">Alokasi: <span id="val-urea-target">0</span></span>
                         </div>
                         <div class="kpi-sisa-row" id="row-urea-sisa">Sisa Alokasi: <span id="val-urea-sisa">0</span></div>
                     </div>
@@ -511,8 +512,9 @@
                         <div class="progress-track-modern">
                             <div class="progress-bar bg-npk" id="prog-npk" style="width: 0%"></div>
                         </div>
+                        <!-- MODIFIED: Added ID to label wrapper for dynamic Text Change (Alokasi vs RKAP) -->
                         <div class="kpi-detail-row">
-                            <span>Alokasi: <span id="val-npk-target">0</span></span>
+                            <span id="lbl-npk-target">Alokasi: <span id="val-npk-target">0</span></span>
                         </div>
                         <div class="kpi-sisa-row" id="row-npk-sisa">Sisa Alokasi: <span id="val-npk-sisa">0</span></div>
                     </div>
@@ -926,6 +928,9 @@
                 const data = isUrea ? nasStats.UREA : nasStats.NPK;
                 const color = isUrea ? '#FFDE00' : '#38bdf8'; 
                 
+                // MODIFIED: Determine Target Label (Retail = RKAP, Subsidi = Alokasi)
+                const targetLabel = state.sector === 'RETAIL' ? 'RKAP' : 'Alokasi';
+
                 const gradient = ctx.createLinearGradient(0, 0, 0, 300);
                 gradient.addColorStop(0, hexToRgbA(color, 0.4));
                 gradient.addColorStop(1, hexToRgbA(color, 0.0));
@@ -945,7 +950,7 @@
                                 pointRadius: 4, pointHoverRadius: 6, pointStyle: 'circle', order: 1
                             },
                             {
-                                label: 'Alokasi', data: data.target, borderColor: colorTarget, borderDash: [6, 6],
+                                label: targetLabel, data: data.target, borderColor: colorTarget, borderDash: [6, 6],
                                 borderWidth: 2, fill: false, tension: 0.4, pointRadius: 0, pointStyle: targetIcon, order: 2 
                             },
                             {
@@ -1006,6 +1011,9 @@
                 if(charts.provinsi) charts.provinsi.destroy();
                 const colorMain = state.activeProduct === 'UREA' ? '#FFDE00' : '#38bdf8';
                 
+                // MODIFIED: Determine Target Label (Retail = RKAP, Subsidi = Alokasi)
+                const targetLabel = state.sector === 'RETAIL' ? 'RKAP' : 'Alokasi';
+
                 const gradient = ctx.createLinearGradient(0, 0, 0, 300);
                 gradient.addColorStop(0, hexToRgbA(colorMain, 0.4));
                 gradient.addColorStop(1, hexToRgbA(colorMain, 0.0));
@@ -1024,7 +1032,7 @@
                                 fill: true, tension: 0.4, borderWidth: 3, pointRadius: 4, pointHoverRadius: 6, pointStyle: 'circle', order: 1
                             },
                             {
-                                label: 'Alokasi', data: mTarget, borderColor: colorTarget, borderDash: [6, 6], borderWidth: 2, fill: false, tension: 0.4, pointRadius: 0, pointStyle: targetIcon, order: 2
+                                label: targetLabel, data: mTarget, borderColor: colorTarget, borderDash: [6, 6], borderWidth: 2, fill: false, tension: 0.4, pointRadius: 0, pointStyle: targetIcon, order: 2
                             },
                             {
                                 label: 'Stok', data: mStock, type: 'bar', backgroundColor: '#616161', borderColor: '#616161', borderWidth: 0, barPercentage: 0.8, pointStyle: 'rect', order: 3
@@ -1073,6 +1081,9 @@
                 
                 // --- COLOR REVISION: WHITE (Dark Mode) & BLACK (Light Mode) ---
                 const colorTarget = state.theme === 'dark' ? '#ffffff' : '#000000';
+                
+                // MODIFIED: Determine Target Label (Retail = RKAP, Subsidi = Alokasi)
+                const targetLabel = state.sector === 'RETAIL' ? 'RKAP' : 'Alokasi';
 
                 charts.nasionalDist = new Chart(ctx, {
                     type: 'bar',
@@ -1094,7 +1105,7 @@
                                 order: 1 
                             },
                             {
-                                type: 'line', label: 'Alokasi', data: data.target, 
+                                type: 'line', label: targetLabel, data: data.target, 
                                 borderColor: colorTarget, borderDash: [6, 6], borderWidth: 2, 
                                 fill: false, tension: 0.4, pointRadius: 0, pointStyle: createDashedCircle(colorTarget), order: 2
                             },
@@ -1190,6 +1201,9 @@
                 const gradient = ctx.createLinearGradient(0, 0, 0, 300);
                 gradient.addColorStop(0, hexToRgbA(colorLine, 0.4));
                 gradient.addColorStop(1, hexToRgbA(colorLine, 0.0));
+                
+                // MODIFIED: Determine Target Label (Retail = RKAP, Subsidi = Alokasi)
+                const targetLabel = state.sector === 'RETAIL' ? 'RKAP' : 'Alokasi';
 
                 charts.provinsiDist = new Chart(ctx, {
                     type: 'bar',
@@ -1211,7 +1225,7 @@
                                 order: 1 
                             },
                             {
-                                type: 'line', label: 'Alokasi', data: mTarget, borderColor: colorTarget, borderDash: [6, 6], borderWidth: 2, fill: false, tension: 0.4, pointRadius: 0, pointStyle: targetIcon, order: 2
+                                type: 'line', label: targetLabel, data: mTarget, borderColor: colorTarget, borderDash: [6, 6], borderWidth: 2, fill: false, tension: 0.4, pointRadius: 0, pointStyle: targetIcon, order: 2
                             },
                             {
                                 label: 'Truk', data: mLand, backgroundColor: colorTruck, stack: 'stack1', order: 3
@@ -1327,6 +1341,10 @@
 
             const renderSalesKPI = (stats) => {
                 const fmt = (n) => formatNumber(n);
+                
+                // MODIFIED: Determine Target Name based on Sector
+                const targetName = state.sector === 'RETAIL' ? 'RKAP' : 'Alokasi';
+
                 const updateCard = (key) => {
                     const real = stats.curr[key].real;
                     const target = stats.curr[key].target;
@@ -1343,8 +1361,9 @@
                     const elProg = document.getElementById(`prog-${keyL}`);
                     if(elProg) elProg.style.width = Math.min(pct, 100) + '%';
                     
-                    const elTarget = document.getElementById(`val-${keyL}-target`);
-                    if(elTarget) elTarget.innerText = fmt(target);
+                    // MODIFIED: Update label text + value
+                    const elLblTarget = document.getElementById(`lbl-${keyL}-target`);
+                    if(elLblTarget) elLblTarget.innerHTML = `${targetName}: <span id="val-${keyL}-target">${fmt(target)}</span>`;
 
                     const elRowSisa = document.getElementById(`row-${keyL}-sisa`);
                     if (elRowSisa) {
@@ -1353,7 +1372,8 @@
                             elRowSisa.innerHTML = '<i class="fas fa-check-circle"></i> Tercapai';
                             elRowSisa.style.color = 'var(--color-success)'; 
                         } else {
-                            elRowSisa.innerHTML = `Sisa Alokasi: <span id="val-${keyL}-sisa">${fmt(sisa)}</span>`;
+                            // MODIFIED: Update label text in Sisa row
+                            elRowSisa.innerHTML = `Sisa ${targetName}: <span id="val-${keyL}-sisa">${fmt(sisa)}</span>`;
                             elRowSisa.style.color = 'var(--color-danger)'; 
                         }
                     }
@@ -1948,14 +1968,17 @@
                 const pctAnnual = annualTarget > 0 ? (ytdReal / annualTarget * 100).toFixed(1) : 0;
 
                 // --- 3. PROMPT GENERATION ---
+                // MODIFIED: Use dynamic term (RKAP vs Alokasi)
+                const termTarget = sec === 'RETAIL' ? 'RKAP' : 'Alokasi';
+                
                 const ctxData = `
                     DATA: ${ctxLabel}, Produk ${prod}, Sektor ${sec}, Tahun ${year}.
                     - Realisasi Kumulatif (s.d ${currMonthName}): ${formatNumber(ytdReal)} Ton.
-                    - Alokasi Kumulatif (s.d ${currMonthName}): ${formatNumber(ytdTarget)} Ton.
-                    - Alokasi Tahunan: ${formatNumber(annualTarget)} Ton.
+                    - ${termTarget} Kumulatif (s.d ${currMonthName}): ${formatNumber(ytdTarget)} Ton.
+                    - ${termTarget} Tahunan: ${formatNumber(annualTarget)} Ton.
                     - Stok Saat Ini (Akhir ${currMonthName}): ${formatNumber(currentStock)} Ton.
-                    - % Capaian vs Alokasi Kumulatif: ${pctYtd}%.
-                    - % Capaian vs Alokasi Tahunan: ${pctAnnual}%.
+                    - % Capaian vs ${termTarget} Kumulatif: ${pctYtd}%.
+                    - % Capaian vs ${termTarget} Tahunan: ${pctAnnual}%.
                 `;
 
                 // REVISI LOGIKA FILTER AI INSIGHT (UPDATED - SUPPORT PREV YEAR)
@@ -2012,14 +2035,14 @@
                     ${contextString || "Tidak ada isu khusus."}
                     
                     Instruksi:
-                    1. Analisa performa berdasarkan capaian terhadap Alokasi Kumulatif (s.d bulan ini) dan Ketersediaan Stok.
+                    1. Analisa performa berdasarkan capaian terhadap ${termTarget} Kumulatif (s.d bulan ini) dan Ketersediaan Stok.
                     2. Berikan 3 poin insight: Status, Faktor Penyebab, dan Rekomendasi Aksi.
                     3. ATURAN PENTING: Gunakan tepat 2 kalimat per poin.
-                    4. FORMAT OUTPUT: Gunakan format "Label: Isi" (Tanpa tanda kurung siku). Gunakan istilah "Alokasi" bukan "Target".
+                    4. FORMAT OUTPUT: Gunakan format "Label: Isi" (Tanpa tanda kurung siku). Gunakan istilah "${termTarget}" sesuai data.
                     
                     Format HTML (Body Only):
                     <ul style="margin:0; padding-left:1.2em; font-size:12px;">
-                        <li style="margin-bottom:6px;"><strong>Status:</strong> (Analisa capaian vs Alokasi & posisi stok aman/tidak).</li>
+                        <li style="margin-bottom:6px;"><strong>Status:</strong> (Analisa capaian vs ${termTarget} & posisi stok aman/tidak).</li>
                         <li style="margin-bottom:6px;"><strong>Faktor:</strong> (Penyebab utama dari data/info).</li>
                         <li style="margin-bottom:6px;"><strong>Aksi:</strong> (Rekomendasi strategis).</li>
                     </ul>
